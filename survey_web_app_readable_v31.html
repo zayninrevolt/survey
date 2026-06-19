@@ -1,0 +1,3178 @@
+<!DOCTYPE html>
+<html lang="en">
+ <!--
+  Heating Survey Web Form - Readable commented version.
+
+  Where to edit:
+  - CSS styles are in the <style> blocks near the top.
+  - Form questions are in the JavaScript arrays under MAIN FORM DATA.
+  - Sheet layouts are in renderFront(), renderRads(), renderA12a(), and renderProfile().
+  - PDF/signature behaviour is under PDF MENU, PRINTING, AND SIGNATURE PADS.
+-->
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1" name="viewport"/>
+  <title>
+   Heating Survey Web Form
+  </title>
+  <style>
+   :root {
+  --yellow:#ffff66;
+  --gold:#ffc000;
+  --border:#111;
+  --grid:#e9e9e9;
+  --red:#e60000;
+  --black:#000;
+  --muted:#666;
+  --panel:#f7f7f7;
+  --accent:#111827
+}
+* {
+  box-sizing:border-box
+}
+ body {
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:#f2f4f7;
+  color:#111;
+  font-size:14px
+}
+.app {
+  display:grid;
+  grid-template-columns:390px 1fr;
+  min-height:100vh
+}
+.sidebar {
+  background:#fff;
+  border-right:1px solid #ddd;
+  padding:16px;
+  position:sticky;
+  top:0;
+  height:100vh;
+  overflow:auto
+}
+.main {
+  padding:16px;
+  overflow:auto
+}
+.title {
+  font-size:21px;
+  font-weight:700;
+  margin:0 0 4px
+}
+.subtitle {
+  color:#555;
+  margin:0 0 14px;
+  line-height:1.35
+}
+.tabs {
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin:12px 0
+}
+.tab {
+  border:1px solid #ccc;
+  background:#f7f7f7;
+  border-radius:8px;
+  padding:8px 10px;
+  cursor:pointer;
+  font-weight:700
+}
+.tab.active {
+  background:#111827;
+  color:#fff;
+  border-color:#111827
+}
+.section {
+  display:none
+}
+.section.active {
+  display:block
+}
+.card {
+  background:#fafafa;
+  border:1px solid #ddd;
+  border-radius:10px;
+  padding:12px;
+  margin:10px 0
+}
+.card h3 {
+  margin:0 0 10px;
+  font-size:15px
+}
+.field {
+  margin-bottom:9px
+}
+.field label {
+  display:block;
+  font-weight:700;
+  margin-bottom:4px
+}
+.field input,.field select,.field textarea {
+  width:100%;
+  border:1px solid #bbb;
+  border-radius:6px;
+  padding:8px;
+  font:inherit;
+  background:#fff
+}
+.field textarea {
+  min-height:64px;
+  resize:vertical
+}
+.row {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
+}
+.buttons {
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin:12px 0
+}
+.buttons button {
+  border:0;
+  border-radius:8px;
+  background:#111827;
+  color:#fff;
+  padding:9px 11px;
+  font-weight:700;
+  cursor:pointer
+}
+.buttons button.secondary {
+  background:#4b5563
+}
+.buttons button.warning {
+  background:#b91c1c
+}
+.sheet-wrap {
+  background:#fff;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  padding:14px;
+  min-width:900px;
+  margin-bottom:18px;
+  box-shadow:0 1px 2px rgba(0,0,0,.05)
+}
+.sheet-title {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px
+}
+.sheet-title h2 {
+  font-size:18px;
+  margin:0
+}
+.sheet-title small {
+  color:#666
+}
+.sheet {
+  border-collapse:collapse;
+  table-layout:fixed;
+  background:#fff
+}
+.sheet td,.sheet th {
+  border:1.5px solid var(--border);
+  padding:4px 5px;
+  height:24px;
+  vertical-align:middle;
+  white-space:pre-wrap
+}
+.sheet .thin td,.sheet .thin th {
+  border-width:1px
+}
+.sheet .label {
+  font-weight:700;
+  background:#fff
+}
+.sheet .input {
+  background:var(--yellow);
+  min-width:80px
+}
+.sheet .header {
+  font-weight:700;
+  text-align:center;
+  background:#fff
+}
+.sheet .gold {
+  background:var(--gold);
+  font-weight:700
+}
+.sheet .black {
+  background:#000;
+  color:#fff;
+  font-weight:700;
+  text-align:center
+}
+.sheet .red {
+  color:var(--red);
+  font-weight:700
+}
+.sheet .warn {
+  background:red;
+  color:#000;
+  font-weight:700;
+  text-align:center
+}
+.center {
+  text-align:center
+}
+.right {
+  text-align:right
+}
+.small {
+  font-size:12px
+}
+.logo {
+  font-size:30px;
+  font-weight:900;
+  line-height:.85;
+  margin-bottom:8px
+}
+.logo span {
+  color:#f59e0b
+}
+.muted {
+  color:#666
+}
+.front {
+  width:1200px
+}
+.front col {
+  width:75px
+}
+.rads {
+  width:1180px
+}
+.rads col.room {
+  width:68px
+}
+.rads col.narrow {
+  width:54px
+}
+.rads col.med {
+  width:110px
+}
+.rads col.big {
+  width:140px
+}
+.profile {
+  width:760px
+}
+.profile col {
+  width:95px
+}
+.a12a {
+  width:880px
+}
+.a12a col {
+  width:110px
+}
+.data {
+  font-weight:400
+}
+.input .data {
+  display:block;
+  min-height:16px
+}
+.help {
+  background:#fff7ed;
+  border:1px solid #fed7aa;
+  border-radius:8px;
+  padding:10px;
+  margin-bottom:12px;
+  color:#7c2d12
+}
+.hidden {
+  display:none
+}
+@media(max-width:1000px) {
+  .app {
+    display:block
+  }
+  .sidebar {
+    position:static;
+    height:auto
+  }
+  .main {
+    padding:10px
+  }
+  .sheet-wrap {
+    min-width:760px
+  }
+}
+@media print {
+  body {
+    background:#fff
+  }
+  .sidebar,.buttons,.help,.sheet-title small {
+    display:none
+  }
+  .app {
+    display:block
+  }
+  .main {
+    padding:0
+  }
+  .sheet-wrap {
+    border:0;
+    box-shadow:none;
+    page-break-after:always;
+    margin:0;
+    padding:0
+  }
+  .sheet {
+    break-inside:avoid
+  }
+  .main {
+    overflow:visible
+  }
+  .sheet-title h2 {
+    margin:12px 0
+  }
+  .sheet td,.sheet th {
+    font-size:11px;
+    padding:3px
+  }
+}
+  </style>
+  <style>
+   @media print {
+  * {
+    -webkit-print-color-adjust:exact!important;
+    print-color-adjust:exact!important;
+    color-adjust:exact!important
+  }
+  .sheet .input {
+    background:#ffff66!important
+  }
+  .sheet .gold {
+    background:#ffc000!important
+  }
+  .sheet .black {
+    background:#000!important;
+    color:#fff!important
+  }
+  .sheet .warn {
+    background:red!important
+  }
+}
+  </style>
+  <style>
+   .rad-materials {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+  width:1180px
+}
+.rad-materials .sheet {
+  width:100%
+}
+.rad-materials .sheet td,.rad-materials .sheet th {
+  height:24px
+}
+@media print {
+  .rad-materials {
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:10px!important;
+    width:100%
+  }
+}
+  </style>
+  <style>
+   .pdf-panel {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+  display:none;
+  z-index:9999;
+  align-items:center;
+  justify-content:center
+}
+.pdf-panel.open {
+  display:flex
+}
+.pdf-card {
+  background:#fff;
+  border-radius:12px;
+  max-width:430px;
+  padding:18px;
+  box-shadow:0 20px 60px rgba(0,0,0,.25)
+}
+.pdf-card h3 {
+  margin:0 0 8px
+}
+.pdf-card p {
+  margin:0 0 12px;
+  color:#555;
+  line-height:1.35
+}
+.pdf-card button {
+  border:0;
+  border-radius:8px;
+  background:#111827;
+  color:#fff;
+  padding:10px 12px;
+  font-weight:700;
+  cursor:pointer;
+  margin:4px
+}
+.pdf-card button.secondary {
+  background:#4b5563
+}
+.signature-pad-wrap {
+  border:1px solid #ddd;
+  border-radius:10px;
+  background:#fff;
+  padding:10px;
+  margin:10px 0
+}
+.signature-pad-wrap canvas {
+  width:100%;
+  height:120px;
+  border:1px solid #aaa;
+  border-radius:8px;
+  background:#fff;
+  touch-action:none
+}
+.signature-pad-actions {
+  display:flex;
+  gap:8px;
+  margin-top:8px
+}
+.signature-pad-actions button {
+  border:0;
+  border-radius:8px;
+  background:#4b5563;
+  color:#fff;
+  padding:8px 10px;
+  font-weight:700
+}
+.signature-img {
+  max-width:100%;
+  height:48px;
+  display:block;
+  object-fit:contain
+}
+.signature-placeholder {
+  display:block;
+  height:48px;
+  color:#777;
+  font-style:italic
+}
+.signature-cell {
+  height:56px;
+  background:#ffff66
+}
+@media print {
+  .pdf-panel {
+    display:none!important
+  }
+}
+  </style>
+ 
+<style>
+/* Extra room controls on the Rads tab */
+.extra-room-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.extra-room-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.extra-room-pill button {
+  border: 0;
+  background: #b91c1c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.extra-room-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.extra-room-add button {
+  border: 0;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  padding: 8px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+</style>
+
+<style>
+/* Larger dropdowns for phones/tablets */
+.field select {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 1000px) {
+  .field select {
+    min-height: 50px;
+    font-size: 17px;
+    padding: 12px;
+  }
+}
+</style>
+
+<style>
+/* Bigger room expand/collapse rows on the Rads tab */
+#radsForm details {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+#radsForm summary {
+  min-height: 54px;
+  padding: 16px 14px;
+  background: #f3f4f6;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style-position: inside;
+}
+
+#radsForm summary::after {
+  content: "Tap to open";
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+#radsForm details[open] summary::after {
+  content: "Tap to close";
+}
+
+#radsForm details .field {
+  padding: 0 12px;
+}
+
+#radsForm details .field:first-of-type {
+  padding-top: 12px;
+}
+
+#radsForm details .field:last-of-type {
+  padding-bottom: 12px;
+}
+
+@media (max-width: 1000px) {
+  #radsForm summary {
+    min-height: 62px;
+    font-size: 18px;
+    padding: 18px 16px;
+  }
+
+  #radsForm details {
+    margin: 12px 0;
+  }
+}
+</style>
+
+<style>
+/* Stronger mobile/tablet room selector sizing for the Rads tab */
+#radsForm details {
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  margin: 12px 0 !important;
+  overflow: hidden !important;
+}
+
+#radsForm details > summary {
+  min-height: 62px !important;
+  padding: 18px 16px !important;
+  background: #f3f4f6 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  list-style-position: inside !important;
+}
+
+#radsForm details > summary::after {
+  content: "Tap to open" !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+#radsForm details[open] > summary::after {
+  content: "Tap to close" !important;
+}
+
+#radsForm details .field {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+#a_note_contractor,
+#a_site_rules {
+  background: #f3f4f6 !important;
+  color: #555 !important;
+  cursor: not-allowed !important;
+}
+</style>
+
+<style>
+/* Bigger A12a expand/collapse sections for phones/tablets */
+#a12aForm details {
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  margin: 12px 0 !important;
+  overflow: hidden !important;
+}
+
+#a12aForm details > summary {
+  min-height: 62px !important;
+  padding: 18px 16px !important;
+  background: #f3f4f6 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  list-style-position: inside !important;
+}
+
+#a12aForm details > summary::after {
+  content: "Tap to open" !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+#a12aForm details[open] > summary::after {
+  content: "Tap to close" !important;
+}
+
+#a12aForm details .field {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+#a12aForm details .field:first-of-type {
+  padding-top: 12px !important;
+}
+
+#a12aForm details .field:last-of-type {
+  padding-bottom: 12px !important;
+}
+</style>
+</head>
+ <body>
+  <div class="app">
+   <aside class="sidebar">
+    <h1 class="title">
+     Heating Survey Form
+    </h1>
+    <p class="subtitle">
+     Fill in the form and the spreadsheet-style sheets update automatically. Use Save PDFs to create one PDF for Front/Rads and one PDF for the H&amp;S pages.
+    </p>
+    <div class="tabs">
+     <button class="tab active" data-tab="frontForm">
+      Front
+     </button>
+     <button class="tab" data-tab="radsForm">
+      Rads
+     </button>
+     <button class="tab" data-tab="a12aForm">
+      A12a
+     </button>
+     <button class="tab" data-tab="profileForm">
+      Profile
+     </button>
+    </div>
+    <div class="buttons">
+     <button onclick="showPdfOptions()">
+      Save PDFs
+     </button>
+     <button class="secondary" onclick="saveJson()">
+      Save data
+     </button>
+     <button class="secondary" onclick="document.getElementById('loadFile').click()">
+      Load data
+     </button>
+     <button class="warning" onclick="clearForm()">
+      Clear
+     </button>
+     <input accept="application/json" class="hidden" id="loadFile" type="file"/>
+    </div>
+    <div class="help">
+     This is a static HTML file, so it can run locally without a server. It does not send any data anywhere.
+    </div>
+    <div id="commonForm">
+    </div>
+    <section class="section active" id="frontForm">
+    </section>
+    <section class="section" id="radsForm">
+    </section>
+    <section class="section" id="a12aForm">
+    </section>
+    <section class="section" id="profileForm">
+    </section>
+   </aside>
+   <main class="main" id="preview">
+   </main>
+  </div>
+  <script>
+   /* ============================================================
+   MAIN FORM DATA AND SPREADSHEET PREVIEW
+   Edit the field arrays below to add/remove questions.
+   The renderFront/renderRads/renderA12a/renderProfile functions
+   build the spreadsheet-style preview on the right.
+   update() redraws the preview every time a form field changes.
+   ============================================================ */
+const yesNo=['','Yes','No','N/A'];
+const rooms=['Lounge','Hallway','Kitchen','D Room','Bed 1','Bed 2','Bed 3','Bed 4','Landing','Bath','WC'];
+const risks=[
+ ['site_conditions','Site Conditions & Information','No','',''],['working_heights','Working at Heights','Yes','Yes','Ladder access'],['manual_handling','Manual Handling','Yes','Yes','Materials and Tools'],['noise','Noise','Yes','Yes','Drilling'],['dust','Dust','Yes','Yes','Drilling'],['demolition','Demolition','No','',''],['excavation','Excavation','No','',''],['fire','Fire','Yes','Yes','Soldering'],['electrical','Electrical\nHas 100amp isolator been fitted?','Yes','No',''],['gas','Gas','Yes','Yes','Explosions'],['asbestos_survey','Has Asbestos Survey been carried out, and has asbestos been identified, any action taken?','Yes','Yes',''],['confined_spaces','Confined spaces','No','',''],['materials','Materials','Yes','Yes','COSHH'],['permit_work','Any permit to work systems required?','No','',''],['violence_register','Has the register been checked for Violence and Aggression indicator?','Yes','No','None'],['additional_info','Any additional information','No','','']
+];
+const frontFields=[
+ ['front_sys','Range rate output / 50% value','text'],['front_boiler_temp','Boiler temperature °C','text'],['front_warning_codes','Warning codes','text'],['front_further','Further information','textarea'],['front_address','Full Address','textarea'],['front_uprn','UPRN','text'],['front_home','Home telephone','tel'],['front_mobile','Mobile telephone','tel'],['front_additional_tel','Additional telephone','tel'],['front_postcode','Postcode','text'],['front_estate','Estate','text'],['front_type','Type','text'],['front_customer','Customer name','text'],['front_surveyor','Surveyor','text'],['front_date','Date','date'],['front_decor','Decoration allowance','select',yesNo],['front_walls','Walls','text'],['front_flush','Flush system','select',yesNo],['front_balance','Balance system','select',yesNo],['front_existing_boiler','Existing boiler make & position','textarea'],['front_new_boiler','New boiler position','textarea'],['front_stop_tap','Stop tap position','text'],['front_flow_rate','Flow rate','text'],['front_remove_tank','Remove - Tank & cylinder','select',yesNo],['front_remove_storage','Remove - Storage heaters','select',yesNo],['front_remove_gas_wall','Remove - Gas wall heaters','select',yesNo],['front_remove_gas_fire','Remove - Gas fire','select',yesNo],['front_builders_opening','Remove - Brick up builders opening','select',yesNo],['front_gas_meter','Gas meter position','text'],['front_electric_meter','Electric meter position','text'],['front_isolator','Isolator fitted','select',yesNo],['front_isolator_location','Isolator location','text'],['front_radiator','Existing pipe size - Radiator','text'],['front_gas_meter_pipe','Existing pipe size - Gas meter','text'],['front_boiler_pipe','Existing pipe size - Boiler','text'],['front_asbestos_req','Asbestos survey requested','select',yesNo],['front_asbestos','Asbestos','textarea'],['front_recarcass','Re-carcass gas','text'],['front_condense','Route of condense','textarea'],['front_fit_tee','Fit tee into condense / vent','textarea'],['front_brick_lounge','Brick up lounge through vent','select',yesNo],['front_remove_lead','Remove lead from gas meter','select',yesNo],['front_separate_pipes','Separate condense & PRV pipes','select',yesNo],['front_make_good','Make good kitchen tiles','select',yesNo],['front_other','Other info','textarea']
+];
+const profileFields=[
+ ['p_address','Address','textarea'],['p_postcode','Post Code','text'],['p_customer','Customers Name','text'],['p_home','Home telephone','tel'],['p_mobile','Mobile telephone','tel'],['p_rent_name','Name(s) on Rent Account','text'],['p_contact_hours','Contact hours','text'],['p_property_type','Property Type','text'],['p_beds','No. of Beds','number'],['p_warden','Warden Service?','select',yesNo],['p_warden_name','Wardens Name','text'],['p_warden_contact','Contact Number','text'],['p_occupants','No. of occupants','number'],['p_adults','Adults','number'],['p_children','Children','number'],['p_ages','Ages','text'],['p_pets','Pets in property?','select',yesNo],['p_pet_provision','Can provision be made for them?','select',yesNo],['p_occupation_hours','Hours of occupation','text'],['p_work_home','Do you work from home?','select',yesNo],['p_language','First language','text'],['p_interpreter','Interpreter required?','select',yesNo],['p_elderly','Elderly','select',yesNo],['p_deaf','Deaf','select',yesNo],['p_long_sick','Long Term Sick','select',yesNo],['p_mobility','Mobility Problems / Other','select',yesNo],['p_disabled','Registered Disabled?','select',yesNo],['p_disabled_names','Names','text'],['p_respiratory','Respiratory / chest condition e.g. Asthma?','select',yesNo],['p_respiratory_names','Names','text'],['p_away_works','If so, will they be away during works?','select',yesNo],['p_oxygen','Emergency oxygen cylinder?','select',yesNo],['p_medical','Other medical conditions to be advised about?','select',yesNo],['p_medical_details','Please give details','textarea'],['p_dust_noise','Can person become ill due to dust, noise, stress and upheaval?','select',yesNo],['p_heating_choice','Customers choice of heating','select',['','Boiler','ASHP','Electric','Other']],['p_energy_provider','Customers Energy Provider','text'],['p_install_explained','Proposed installation fully explained and understood?','select',yesNo],['p_scale_explained','Scale of works and time explained?','select',yesNo],['p_disruption','Aware of potential disruption?','select',yesNo],['p_live_elsewhere','Able to live with friend/relative if necessary?','select',yesNo],['p_100_isolator','100A Elec isolator fitted?','select',yesNo],['p_alarm','Alarm fitted?','select',yesNo],['p_alarm_used','Alarm working order & used?','select',yesNo],['p_tenant_sig','Tenants Signature','text'],['p_tenant_date','Tenant Date','date'],['p_work_safe','Can the work proceed safely?','select',yesNo],['p_full_decant','Need to consider a full decant?','select',yesNo],['p_rest_arrangements','Rest a while / temporary arrangements available?','select',yesNo],['p_labour_changes','Additional planning or labour changes needed?','select',yesNo],['p_assessment_details','If yes, give details','textarea'],['p_surveyor_sig','Surveyors Signature','text'],['p_surveyor_date','Surveyor Date','date']
+];
+const a12aFields=[['a_project','Project','text','Essential Renewals Heating'],['a_location','Location','text'],['a_description','Description','textarea'],['a_start','Start Date','text','October 25'],['a_complete','Complete Date','text','November 25'],['a_surveyor','Surveyor','text','R. Chamberlain - 07787360860'],['a_liaison','Liaison Officer','text','Tracy Tonge - 329743']];
+const materialFields=[['mat_boiler','Worcester 4000 inc. auto bypass / filling link / filter / vessel','number'],['mat_flue','Flue','select',['','Standard','Vertical']],['mat_clock','Clock','select',['','C1+','C2+']],['mat_clock_loc','Clock location','text'],['mat_plume','Plume Kit','number'],['mat_total_rads','Total Number of Radiators','number'],['mat_trv','Danfoss TRV Packs','number'],['mat_lsv','Altech LSV','number'],['mat_sentinel','Sentinel X100 / X800','number'],['mat_condense','Condense Pump','number'],['mat_22mmcap','22mm Capping’s','number'],['mat_install_type','Installation Type','select',['','Select Install','Combi Swap','Full System','ASHP']],['mat_15mm','15mm Copper Tube','select',['','Select Install','Required','Not Required']],['mat_22mm','22mm Copper Tube','select',['','Select Install','Required','Not Required']],['mat_15hp20','15mm Hep2O Coil','select',['','Select Install','Required','Not Required']],['mat_22hp20','22mm Hep2O Tube','select',['','Select Install','Required','Not Required']],['mat_aico','AICO Carbon Monoxide Alarm','select',yesNo]];
+function makeField(f) {
+  let [id,label,type,opts]=f;
+   if(type==='select') {
+    let values=opts||yesNo;
+    return `<div class="field">
+    <label for="${id}">${label}</label>
+    <select id="${id}" data-id="${id}">${values.map(v=>`<option>${v}</option>`).join('')}</select>
+    </div>`
+  }
+   if(type==='textarea')return `<div class="field">
+  <label for="${id}">${label}</label>
+  <textarea id="${id}" data-id="${id}">
+  </textarea>
+  </div>`;
+  return `<div class="field">
+  <label for="${id}">${label}</label>
+  <input id="${id}" data-id="${id}" type="${type||'text'}">
+  </div>`
+}
+function fillForm() {
+  document.getElementById('frontForm').innerHTML=`<div class="card">
+  <h3>Front Sheet</h3>${frontFields.map(makeField).join('')}</div>`;
+  let radsHtml=`<div class="card">
+  <h3>Radiator Sheet</h3>
+  <div class="row">${makeField(['r_address','Address','text'])}${makeField(['r_job','Job Number','text'])}</div>
+  <div class="row">${makeField(['r_ceiling','Ceiling','text'])}${makeField(['r_output_temp','Calculated Output KW','text'])}</div>
+  </div>
+  <div class="card">
+  <h3>Rooms</h3>`;
+  rooms.forEach((room,i)=> {
+    let key=room.toLowerCase().replace(/[^a-z0-9]+/g,'_');radsHtml+=`<details ${i<2?'open':''}>
+    <summary>
+    <b>${room}</b>
+    </summary>${[['len','Length (m)','number'],['wid','Width (m)','number'],['outside','Outside / unheated walls','select',['','0','1','2','3']],['ex_size','Existing Size','text'],['ex_loc','Existing Location','text'],['ex_trv','Existing TRV','select',yesNo],['new_size','New Size','text'],['new_loc','New Location','text'],['new_trv','New TRV','select',yesNo],['sill','Window sill','text'],['kw','kW required','number'],['tc','T/C','text'],['laminate','Laminate / vinyl / tiles','select',yesNo],['output','Output','number']].map(x=>makeField([`rad_${key}_${x[0]}`,`${room} - ${x[1]}`,x[2],x[3]])).join('')}</details>`
+  });
+  radsHtml+=`</div>
+  <div class="card">
+  <h3>Materials</h3>${materialFields.map(makeField).join('')}</div>`;
+  document.getElementById('radsForm').innerHTML=radsHtml;
+  document.getElementById('a12aForm').innerHTML=`<div class="card">
+  <h3>A12a Project</h3>${a12aFields.map(makeField).join('')}</div>
+  <div class="card">
+  <h3>Hazards</h3>${risks.map(r=>`<details>
+  <summary>
+  <b>${r[1]}</b>
+  </summary>${makeField([`a_${r[0]}_app`,'Applicable to site','select',yesNo])}${makeField([`a_${r[0]}_haz`,'Is there a hazard','select',yesNo])}${makeField([`a_${r[0]}_notes`,'Notes','textarea'])}</details>`).join('')}</div>
+  <div class="card">
+  <h3>Notes</h3>${makeField(['a_note_contractor','Note to Contractor','textarea'])}${makeField(['a_site_rules','Site Rules','textarea'])}</div>`;
+  document.getElementById('profileForm').innerHTML=`<div class="card">
+  <h3>Customer Profile</h3>${profileFields.map(makeField).join('')}</div>`;
+  document.querySelectorAll('[data-id]').forEach(el=> {
+    el.addEventListener('input',update);el.addEventListener('change',update)
+  });
+  setDefaults()
+}
+function setDefaults() {
+  let defaults= {
+    'a_project':'Essential Renewals Heating',
+    'a_start':'October 25',
+    'a_complete':'November 25',
+    'a_surveyor':'R. Chamberlain - 07787360860',
+    'a_liaison':'Tracy Tonge - 329743',
+    'a_note_contractor':'Working in occupied properties will require adequate protection and notices for residents, children and the public. The methods of working will need to take this into account.',
+    'a_site_rules':'No Smoking, ID Cards To Be Carried At All Times. No Abusive Behaviour. Correct Standard Of Dress To Be Maintained At All Times. No Loud Music. All Waste To Be Removed From Site.'
+  };
+  risks.forEach(r=> {
+    defaults[`a_${r[0]}_app`]=r[2];defaults[`a_${r[0]}_haz`]=r[3];defaults[`a_${r[0]}_notes`]=r[4]
+  });
+  Object.entries(defaults).forEach(([id,val])=> {
+    let el=document.getElementById(id);if(el&&!el.value)el.value=val
+  })
+}
+function val(id) {
+  let e=document.getElementById(id);
+  return e?e.value:''
+}
+ function cell(id) {
+  return `<span class="data">${escapeHtml(val(id))}</span>`
+}
+ function escapeHtml(s) {
+  return String(s||'').replace(/[&<>]/g,m=>( {
+    '&':'&amp;','<':'&lt;','>':'&gt;'
+  }
+  [m]))
+}
+function renderFront() {
+  return `<div class="sheet-wrap">
+  <div class="sheet-title">
+  <h2>Front</h2>
+  <small>Spreadsheet-style preview</small>
+  </div>
+  <table class="sheet front">
+  <colgroup>${'<col>'.repeat(16)}</colgroup>
+  <tr>
+  <td colspan="13" class="red center">System designed to meet Building Regulation: Part L. Range rate boiler output to or 50% which ever is higher:</td>
+  <td colspan="2" class="input">${cell('front_sys')}</td>
+  <td class="red center">KW</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="red label">Warning codes:</td>
+  <td colspan="2" class="input">${cell('front_warning_codes')}</td>
+  <td class="red center">MCP</td>
+  <td class="input">
+  </td>
+  <td class="red center">PV</td>
+  <td class="input">
+  </td>
+  <td colspan="2" class="red center">Scaffolding</td>
+  <td class="input">
+  </td>
+  <td colspan="2" class="red center">Electric Shower</td>
+  <td class="input">${cell('front_boiler_temp')}</td>
+  <td colspan="2" class="red center">°C</td>
+  </tr>
+  <tr>
+  <td class="input">
+  </td>
+  <td colspan="3" class="header">Further Information:</td>
+  <td colspan="12" class="input">${cell('front_further')}</td>
+  </tr>
+  <tr>
+  <td colspan="5" class="header">Full Address:</td>
+  <td colspan="2" class="header">UPRN:</td>
+  <td colspan="9" class="header">Telephone Numbers</td>
+  </tr>
+  <tr>
+  <td colspan="5" class="input">${cell('front_address')}</td>
+  <td colspan="2" class="input">${cell('front_uprn')}</td>
+  <td colspan="2" class="label">Home:</td>
+  <td colspan="7" class="input">${cell('front_home')}</td>
+  </tr>
+  <tr>
+  <td colspan="7" class="input">
+  </td>
+  <td colspan="2" class="label">Mobile:</td>
+  <td colspan="7" class="input">${cell('front_mobile')}</td>
+  </tr>
+  <tr>
+  <td class="label">Postcode:</td>
+  <td colspan="2" class="input">${cell('front_postcode')}</td>
+  <td class="label">Estate:</td>
+  <td class="input">${cell('front_estate')}</td>
+  <td class="label">Type:</td>
+  <td class="input">${cell('front_type')}</td>
+  <td colspan="2" class="label">Additional</td>
+  <td colspan="7" class="input">${cell('front_additional_tel')}</td>
+  </tr>
+  <tr>
+  <td colspan="3" class="label center">Customer’s Name:</td>
+  <td colspan="6" class="input">${cell('front_customer')}</td>
+  <td class="label">Surveyor:</td>
+  <td colspan="2" class="input">${cell('front_surveyor')}</td>
+  <td class="label">Date:</td>
+  <td colspan="3" class="input">${cell('front_date')}</td>
+  </tr>
+  <tr>
+  <td colspan="3" class="label center">Decoration Allowance</td>
+  <td colspan="2" class="input">${cell('front_decor')}</td>
+  <td class="label center">Walls:</td>
+  <td colspan="2" class="input">${cell('front_walls')}</td>
+  <td colspan="4" class="red center">Flush System - ${escapeHtml(val('front_flush')||'Yes')}</td>
+  <td colspan="4" class="red center">Balance System - ${escapeHtml(val('front_balance')||'Yes')}</td>
+  </tr>
+  <tr>
+  <td colspan="4" class="label">Existing Boiler Make & Position:</td>
+  <td colspan="5" class="input">${cell('front_existing_boiler')}</td>
+  <td colspan="3" class="label">New Boiler Position:</td>
+  <td colspan="4" class="input">${cell('front_new_boiler')}</td>
+  </tr>
+  <tr>
+  <td rowspan="5" class="label">Remove:</td>
+  <td colspan="4" class="label">Tank & Cylinder</td>
+  <td colspan="4" class="input">${cell('front_remove_tank')}</td>
+  <td colspan="3" class="label">Stop Tap Position:</td>
+  <td colspan="2" class="input">${cell('front_stop_tap')}</td>
+  <td class="label">Flow Rate:</td>
+  <td class="input">${cell('front_flow_rate')}</td>
+  </tr>
+  <tr>
+  <td colspan="4" class="label">Storage Heaters</td>
+  <td colspan="4" class="input">${cell('front_remove_storage')}</td>
+  <td colspan="3" class="label">Gas Meter Position:</td>
+  <td colspan="4" class="input">${cell('front_gas_meter')}</td>
+  </tr>
+  <tr>
+  <td colspan="4" class="label">Gas Wall Heaters</td>
+  <td colspan="4" class="input">${cell('front_remove_gas_wall')}</td>
+  <td colspan="3" class="label">Electric Meter Position:</td>
+  <td colspan="4" class="input">${cell('front_electric_meter')}</td>
+  </tr>
+  <tr>
+  <td colspan="4" class="label">Gas Fire</td>
+  <td colspan="4" class="input">${cell('front_remove_gas_fire')}</td>
+  <td colspan="2" class="label">Isolator Fitted:</td>
+  <td class="input">${cell('front_isolator')}</td>
+  <td class="label">Location</td>
+  <td colspan="3" class="input">${cell('front_isolator_location')}</td>
+  </tr>
+  <tr>
+  <td colspan="4" class="label">Brick Up builders Opening</td>
+  <td colspan="4" class="input">${cell('front_builders_opening')}</td>
+  <td rowspan="3" class="label center">Existing<br>Pipe Size:</td>
+  <td colspan="2" class="label center">Radiator</td>
+  <td colspan="4" class="input">${cell('front_radiator')}</td>
+  </tr>
+  <tr>
+  <td colspan="4" class="label">Asbestos Survey Requested:</td>
+  <td colspan="5" class="input">${cell('front_asbestos_req')}</td>
+  <td colspan="2" class="label center">Gas Meter</td>
+  <td colspan="4" class="input">${cell('front_gas_meter_pipe')}</td>
+  </tr>
+  <tr>
+  <td class="label">Asbestos:</td>
+  <td colspan="8" class="input">${cell('front_asbestos')}</td>
+  <td colspan="2" class="label center">Boiler</td>
+  <td colspan="4" class="input">${cell('front_boiler_pipe')}</td>
+  </tr>
+  <tr>
+  <td colspan="3" class="label center">Route Of Condense:</td>
+  <td colspan="6" class="input">${cell('front_condense')}</td>
+  <td colspan="3" class="label">Re-carcass Gas</td>
+  <td colspan="4" class="input">${cell('front_recarcass')}</td>
+  </tr>
+  <tr>
+  <td colspan="5" class="label">Brick up lounge through vent</td>
+  <td class="input">${cell('front_brick_lounge')}</td>
+  <td colspan="10" class="input" rowspan="4"><b>Other Info:</b><br>${cell('front_other')}</td>
+  </tr>
+  <tr>
+  <td colspan="5" class="label">Remove lead from gas meter</td>
+  <td class="input">${cell('front_remove_lead')}</td>
+  </tr>
+  <tr>
+  <td colspan="5" class="label">Separate condense & PRV pipes</td>
+  <td class="input">${cell('front_separate_pipes')}</td>
+  </tr>
+  <tr>
+  <td colspan="5" class="label">Make good kitchen tiles</td>
+  <td class="input">${cell('front_make_good')}</td>
+  </tr>
+  </table>
+  </div>`
+}
+function renderRads() {
+  let rows=rooms.map(room=> {
+    let key=room.toLowerCase().replace(/[^a-z0-9]+/g,'_');return `<tr>
+    <td>${room}</td>${['len','wid','outside','ex_size','ex_loc','ex_trv','new_size','new_loc','new_trv','sill','kw','tc','laminate','output'].map(x=>`<td class="input">${cell(`rad_${key}_${x}`)}</td>`).join('')}</tr>`
+  }).join('');
+  let mats=materialFields.map(f=>`<tr>
+  <td class="label" colspan="3">${f[1]}</td>
+  <td class="input" colspan="2">${cell(f[0])}</td>
+  </tr>`).join('');
+  return `<div class="sheet-wrap">
+  <div class="sheet-title">
+  <h2>Rads</h2>
+  <small>Radiator schedule</small>
+  </div>
+  <table class="sheet rads">
+  <colgroup>
+  <col class="room">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="big">
+  <col class="big">
+  <col class="narrow">
+  <col class="big">
+  <col class="big">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  </colgroup>
+  <tr>
+  <td class="label">Address:</td>
+  <td colspan="9">${cell('r_address')}</td>
+  <td colspan="3" class="label center">Job Number:</td>
+  <td colspan="2" class="input">${cell('r_job')}</td>
+  </tr>
+  <tr>
+  <td class="label">Ceiling</td>
+  <td colspan="2" class="label center">(M)</td>
+  <td colspan="7">
+  </td>
+  <td colspan="3" class="label right">Output:</td>
+  <td class="input">${cell('r_output_temp')}</td>
+  <td class="label">KW</td>
+  </tr>
+  <tr class="small">
+  <th>
+  </th>
+  <th>Length<br>(M)</th>
+  <th>Width<br>(M)</th>
+  <th>Outside/<br>unheated walls</th>
+  <th>Existing Size</th>
+  <th>Location</th>
+  <th>TRV</th>
+  <th>New Size</th>
+  <th>Location</th>
+  <th>TRV</th>
+  <th>Window sill</th>
+  <th>KW required</th>
+  <th>T/C</th>
+  <th>Laminate/<br>vinyl/Tiles</th>
+  <th>Output</th>
+  </tr>${rows}<tr>
+  <td colspan="11">
+  </td>
+  <td colspan="3" class="label right">Total KW:</td>
+  <td class="input">${calcTotalKw()}</td>
+  </tr>
+  </table>
+  <br>
+  <table class="sheet rads">
+  <tr>
+  <th colspan="3">Materials</th>
+  <th colspan="2">Quantity</th>
+  </tr>${mats}</table>
+  </div>`
+}
+function calcTotalKw() {
+  let t=0;
+  rooms.forEach(room=> {
+    let key=room.toLowerCase().replace(/[^a-z0-9]+/g,'_');t+=Number(val(`rad_${key}_kw`)||0)
+  });
+  return t?t.toFixed(2):'0.00'
+}
+function renderA12a() {
+  let riskRows=risks.map(r=>`<tr>
+  <td colspan="2">${r[1]}</td>
+  <td class="input center">${cell(`a_${r[0]}_app`)}</td>
+  <td class="input center">${cell(`a_${r[0]}_haz`)}</td>
+  <td colspan="4" class="input">${cell(`a_${r[0]}_notes`)}</td>
+  </tr>`).join('');
+  return `<div class="sheet-wrap">
+  <div class="sheet-title">
+  <h2>A12a</h2>
+  <small>Pre Construction Information Schedule</small>
+  </div>
+  <table class="sheet a12a">
+  <colgroup>${'<col>'.repeat(8)}</colgroup>
+  <tr>
+  <td colspan="8" class="gold center" style="height:130px;font-size:34px;font-weight:400">A12a – Pre Construction<br>Information Schedule<br>
+  <br>(Non-Notifiable Projects)</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="black" style="height:70px;font-size:30px">${typeof getSurveyYear === 'function' ? getSurveyYear() : ''}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label center">Project</td>
+  <td colspan="6" class="input center">${cell('a_project')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label center">Surveyed By</td>
+  <td colspan="6" class="input center">${cell('a_surveyor')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label center">Date</td>
+  <td colspan="6" class="input center">${cell('front_date')}</td>
+  </tr>
+  <tr>
+  <td colspan="8" style="height:80px" class="center">PRE CONSTRUCTION INFORMATION FOR NON-NOTIFIABLE PROJECTS ( A12A)</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="gold">Project Details</td>
+  <td colspan="6" class="gold center">${cell('a_project')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="gold">Location</td>
+  <td colspan="6" class="input">${cell('a_location')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="gold">Description</td>
+  <td colspan="6" class="input">${cell('a_description')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="gold">Start Date</td>
+  <td class="input">${cell('a_start')}</td>
+  <td colspan="2" class="gold center">Complete Date:</td>
+  <td colspan="3" class="input center">${cell('a_complete')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="gold">Surveyor (Name, Address, Phone No.)</td>
+  <td colspan="6" class="input center">${cell('a_surveyor')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="gold">Liaison Officer<br>(Name, Address, Phone No.)</td>
+  <td colspan="6" class="input center">${cell('a_liaison')}</td>
+  </tr>
+  <tr>
+  <th class="gold" colspan="2">
+  </th>
+  <th class="gold">Applicable to Site</th>
+  <th class="gold">Is there a Hazard</th>
+  <th class="gold" colspan="4">Notes</th>
+  </tr>${riskRows}<tr>
+  <td colspan="8" class="label">Note to Contractor</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="input center">${cell('a_note_contractor')}</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="label">Site Rules</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="input center">${cell('a_site_rules')}</td>
+  </tr>
+  </table>
+  </div>`
+}
+function renderProfile() {
+  return `<div class="sheet-wrap">
+  <div class="sheet-title">
+  <h2>Customer Profile</h2>
+  <small>Health & Safety Evaluation</small>
+  </div>
+  <table class="sheet profile">
+  <colgroup>${'<col>'.repeat(8)}</colgroup>
+  <tr>
+  <td colspan="8">
+  <b>CUSTOMER PROFILE AND HEALTH & SAFETY EVALUATION</b>
+  </td>
+  </tr>
+  <tr>
+  <td colspan="8" class="small">The purpose of this questionnaire is to enquire into the safety requirements of customers residing at the property particularly with regard to the scale of refurbishment works which are likely to take place and the possible impact upon the people living there.</td>
+  </tr>
+  <tr>
+  <td class="label">Address:</td>
+  <td colspan="5" class="input">${cell('p_address')}</td>
+  <td class="label">Post Code:</td>
+  <td class="input">${cell('p_postcode')}</td>
+  </tr>
+  <tr>
+  <td class="label" colspan="2">Customers Name</td>
+  <td colspan="2" class="input">${cell('p_customer')}</td>
+  <td class="label" colspan="2">Telephone Numbers</td>
+  <td class="label">Home:</td>
+  <td class="input">${cell('p_home')}</td>
+  </tr>
+  <tr>
+  <td class="label" colspan="2">Name(s) on Rent Account</td>
+  <td colspan="4" class="input">${cell('p_rent_name')}</td>
+  <td class="label">Mobile:</td>
+  <td class="input">${cell('p_mobile')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Property Type:</td>
+  <td class="input">${cell('p_property_type')}</td>
+  <td class="label">Warden Service?</td>
+  <td class="input">${cell('p_warden')}</td>
+  <td class="label">Wardens Name</td>
+  <td colspan="2" class="input">${cell('p_warden_name')}</td>
+  </tr>
+  <tr>
+  <td class="label">No. of Beds</td>
+  <td class="input">${cell('p_beds')}</td>
+  <td class="label">No. of occupants</td>
+  <td class="input">${cell('p_occupants')}</td>
+  <td class="label">Adults</td>
+  <td class="input">${cell('p_adults')}</td>
+  <td class="label">Children</td>
+  <td class="input">${cell('p_children')}</td>
+  </tr>
+  <tr>
+  <td class="label">Pets in property?</td>
+  <td colspan="2" class="input">${cell('p_pets')}</td>
+  <td colspan="2" class="label center">Can provision be made for them?</td>
+  <td colspan="3" class="input">${cell('p_pet_provision')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Hours of occupation?</td>
+  <td colspan="6" class="input">${cell('p_occupation_hours')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Do you work from home?</td>
+  <td colspan="6" class="input">${cell('p_work_home')}</td>
+  </tr>
+  <tr>
+  <td class="label">First language:</td>
+  <td colspan="3" class="input">${cell('p_language')}</td>
+  <td colspan="2" class="label">Interpreter required?</td>
+  <td colspan="2" class="input">${cell('p_interpreter')}</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="label">MEDICAL QUESTIONS</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="label">Are you or any member of your household:</td>
+  </tr>
+  <tr>
+  <td class="label">Elderly</td>
+  <td class="input">${cell('p_elderly')}</td>
+  <td class="label">Deaf</td>
+  <td class="input">${cell('p_deaf')}</td>
+  <td class="label">Long Term Sick</td>
+  <td class="input">${cell('p_long_sick')}</td>
+  <td class="label">Mobility Problems / Other</td>
+  <td class="input">${cell('p_mobility')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Registered Disabled?</td>
+  <td colspan="6" class="input">${cell('p_disabled')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Names?</td>
+  <td colspan="6" class="input">${cell('p_disabled_names')}</td>
+  </tr>
+  <tr>
+  <td colspan="6" class="label">Do you or any member of your family suffer from respiratory chest condition e.g. Asthma?</td>
+  <td colspan="2" class="input">${cell('p_respiratory')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Names?</td>
+  <td colspan="6" class="input">${cell('p_respiratory_names')}</td>
+  </tr>
+  <tr>
+  <td colspan="6" class="label">If so, will they be away from the property during works?</td>
+  <td colspan="2" class="input">${cell('p_away_works')}</td>
+  </tr>
+  <tr>
+  <td colspan="6" class="label">Emergency oxygen from a cylinder?</td>
+  <td colspan="2" class="input">${cell('p_oxygen')}</td>
+  </tr>
+  <tr>
+  <td colspan="6" class="label">Are there any medical conditions that we need to be advised about?</td>
+  <td colspan="2" class="input">${cell('p_medical')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Please give details:</td>
+  <td colspan="6" class="input">${cell('p_medical_details')}</td>
+  </tr>
+  <tr>
+  <td colspan="6" class="label">Can any person become ill due to dust, noise, stress and upheaval?</td>
+  <td colspan="2" class="input">${cell('p_dust_noise')}</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="warn">If the answer is YES then the person must be out of the property while the work is carried out.</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="label">WORK CONTENT</td>
+  </tr>${[['Customers choice of heating','p_heating_choice'],['Customers Energy Provider','p_energy_provider'],['Have you had the proposed installation fully explained to you and do you understand what this involves, i.e. position of radiators, central heating boiler etc','p_install_explained'],['Have you been advised of the scale of works to be completed at the property and the time this take?','p_scale_explained'],['Are you aware of the potential for disruption to your domestic / personal life','p_disruption'],['Are you able to live with a friend / relative if necessary, during the days on which the work will take place?','p_live_elsewhere'],['Is there a 100 Elec’ isolator switch fitted in the property','p_100_isolator'],['Is there an alarm fitted?','p_alarm'],['Is the alarm working order & used','p_alarm_used']].map(x=>`<tr>
+  <td colspan="6" class="label">${x[0]}</td>
+  <td colspan="2" class="input">${cell(x[1])}</td>
+  </tr>`).join('')}<tr>
+  <td colspan="2" class="label">Tenants Signature:</td>
+  <td colspan="3" class="input">${cell('p_tenant_sig')}</td>
+  <td class="label">Date:</td>
+  <td colspan="2" class="input">${cell('p_tenant_date')}</td>
+  </tr>
+  <tr>
+  <td colspan="8" class="label">SURVEYORS ASSESSMENT</td>
+  </tr>${[['Can the work proceed safely?','p_work_safe'],['Is there a need to consider a full decant?','p_full_decant'],['Is there a “rest a while” or other temporary arrangements available?','p_rest_arrangements'],['Is there any additional planning or labour organisation changes needed in respect of the property?','p_labour_changes']].map(x=>`<tr>
+  <td colspan="6" class="label">${x[0]}</td>
+  <td colspan="2" class="input">${cell(x[1])}</td>
+  </tr>`).join('')}<tr>
+  <td colspan="2" class="label">If yes, please give details.</td>
+  <td colspan="6" class="input">${cell('p_assessment_details')}</td>
+  </tr>
+  <tr>
+  <td colspan="2" class="label">Surveyors Signature:</td>
+  <td colspan="3" class="input">${cell('p_surveyor_sig')}</td>
+  <td class="label">Date:</td>
+  <td colspan="2" class="input">${cell('p_surveyor_date')}</td>
+  </tr>
+  </table>
+  </div>`
+}
+function update() {
+  document.getElementById('preview').innerHTML=renderFront()+renderRads()+renderA12a()+renderProfile();
+  localStorage.setItem('surveyWebData',JSON.stringify(getData()))
+}
+function getData() {
+  let d= {
+  };
+  document.querySelectorAll('[data-id]').forEach(e=>d[e.dataset.id]=e.value);
+  return d
+}
+function setData(d) {
+  Object.entries(d|| {
+  }).forEach(([k,v])=> {
+    let e=document.querySelector(`[data-id="${CSS.escape(k)}"]`);if(e)e.value=v
+  });
+  update()
+}
+function saveJson() {
+  let blob=new Blob([JSON.stringify(getData(),null,2)], {
+    type:'application/json'
+  });
+  download(blob,'survey-data.json')
+}
+function clearForm() {
+  if(confirm('Clear all entered data?')) {
+    document.querySelectorAll('[data-id]').forEach(e=>e.value='');
+    setDefaults();
+    update()
+  }
+}
+function download(blob,name) {
+  let a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000)
+}
+/* Removed unused exportXls() Excel export function. */
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=> {
+  document.querySelectorAll('.tab,.section').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.getElementById(b.dataset.tab).classList.add('active')
+}));
+document.getElementById('loadFile').addEventListener('change',e=> {
+  let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>setData(JSON.parse(r.result));r.readAsText(f)
+});
+fillForm();
+try {
+  let saved=localStorage.getItem('surveyWebData');
+  if(saved)setData(JSON.parse(saved));
+  else update()
+} catch(e) {
+  update()
+}
+  </script>
+  <script>
+   /* ============================================================
+   COMMON PROPERTY DETAILS
+   Copies address/postcode/customer/date to matching fields.
+   ============================================================ */
+(function() {
+    const commonFields = [
+      ['site_address','Main property address','textarea'],
+      ['site_postcode','Postcode','text'],
+      ['site_customer','Customer name','text'],
+      ['site_surveyor','Surveyor','text'],
+      ['site_date','Survey date','date']
+    ];
+    function buildCommon() {
+        const holder=document.getElementById('commonForm');
+        if(!holder) return;
+        holder.innerHTML = `<div class="card">
+    <h3>Main Property Details</h3>
+    <p class="muted">Enter these once and they will copy across the Front, Rads, A12a and Customer Profile sheets automatically.</p>${commonFields.map(f=>makeField(f)).join('')}</div>`;
+  }
+    function firstValue(ids) {
+        for(const id of ids) {
+      const e=document.getElementById(id); if(e && e.value) return e.value;
+    }
+        return '';
+  }
+    function copyCommon() {
+        const map =  {
+            site_address:['front_address','r_address','p_address','a_location'],
+            site_postcode:['front_postcode','p_postcode'],
+            site_customer:['front_customer','p_customer'],
+            site_surveyor:['front_surveyor'],
+            site_date:['front_date']
+    };
+        Object.entries(map).forEach(([source, targets])=> {
+            const sourceEl=document.getElementById(source); if(!sourceEl) return;
+            targets.forEach(id=> {
+        const t=document.getElementById(id); if(t) t.value=sourceEl.value;
+      });
+    });
+  }
+    function hideDuplicate(id) {
+        const e=document.getElementById(id);
+        const wrap=e && e.closest('.field');
+        if(wrap) wrap.style.display='none';
+  }
+    function seedCommon() {
+        const seeds= {
+            site_address:['site_address','front_address','r_address','p_address','a_location'],
+            site_postcode:['site_postcode','front_postcode','p_postcode'],
+            site_customer:['site_customer','front_customer','p_customer'],
+            site_surveyor:['site_surveyor','front_surveyor'],
+            site_date:['site_date','front_date']
+    };
+        Object.entries(seeds).forEach(([target, ids])=> {
+            const t=document.getElementById(target);
+            if(t && !t.value) t.value=firstValue(ids);
+    });
+  }
+    function wireCommon() {
+        ['front_address','r_address','p_address','a_location','front_postcode','p_postcode','front_customer','p_customer','front_surveyor','front_date'].forEach(hideDuplicate);
+        document.querySelectorAll('#commonForm [data-id]').forEach(el=> {
+            el.addEventListener('input',()=> {
+        copyCommon(); update();
+      });
+            el.addEventListener('change',()=> {
+        copyCommon(); update();
+      });
+    });
+  }
+    buildCommon();
+    seedCommon();
+    copyCommon();
+    wireCommon();
+    const oldSetData = window.setData;
+    if (typeof oldSetData === 'function')  {
+        window.setData = function(d) {
+            oldSetData(d);
+            buildCommon();
+            seedCommon();
+            copyCommon();
+            wireCommon();
+            update();
+    };
+  }
+    update();
+})();
+  </script>
+  <script>
+   /* ============================================================
+   RADS MATERIALS SECTION
+   Splits materials into two side-by-side lists.
+   ============================================================ */
+// Rads page patch: split the bottom materials section into two lists like the original spreadsheet.
+function renderRads() {
+    let rows=rooms.map(room=> {
+        let key=room.toLowerCase().replace(/[^a-z0-9]+/g,'_');
+        return `<tr>
+    <td>${room}</td>${['len','wid','outside','ex_size','ex_loc','ex_trv','new_size','new_loc','new_trv','sill','kw','tc','laminate','output'].map(x=>`<td class="input">${cell(`rad_${key}_${x}`)}</td>`).join('')}</tr>`;
+  }).join('');
+    const leftIds=['mat_boiler','mat_flue','mat_clock','mat_clock_loc','mat_plume','mat_total_rads','mat_trv','mat_lsv','mat_sentinel'];
+    const left=materialFields.filter(f=>leftIds.includes(f[0]));
+    const right=materialFields.filter(f=>!leftIds.includes(f[0]));
+    const materialTable=(items)=>`<table class="sheet rads">
+  <tr>
+  <th colspan="3">Materials</th>
+  <th colspan="2">Quantity</th>
+  </tr>${items.map(f=>`<tr>
+  <td class="label" colspan="3">${f[1]}</td>
+  <td class="input" colspan="2">${cell(f[0])}</td>
+  </tr>`).join('')}</table>`;
+    return `<div class="sheet-wrap">
+  <div class="sheet-title">
+  <h2>Rads</h2>
+  <small>Radiator schedule</small>
+  </div>
+  <table class="sheet rads">
+  <colgroup>
+  <col class="room">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="big">
+  <col class="big">
+  <col class="narrow">
+  <col class="big">
+  <col class="big">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  <col class="narrow">
+  </colgroup>
+  <tr>
+  <td class="label">Address:</td>
+  <td colspan="9">${cell('r_address')}</td>
+  <td colspan="3" class="label center">Job Number:</td>
+  <td colspan="2" class="input">${cell('r_job')}</td>
+  </tr>
+  <tr>
+  <td class="label">Ceiling</td>
+  <td colspan="2" class="label center">(M)</td>
+  <td colspan="7">
+  </td>
+  <td colspan="3" class="label right">Output:</td>
+  <td class="input">${cell('r_output_temp')}</td>
+  <td class="label">KW</td>
+  </tr>
+  <tr class="small">
+  <th>
+  </th>
+  <th>Length<br>(M)</th>
+  <th>Width<br>(M)</th>
+  <th>Outside/<br>unheated walls</th>
+  <th>Existing Size</th>
+  <th>Location</th>
+  <th>TRV</th>
+  <th>New Size</th>
+  <th>Location</th>
+  <th>TRV</th>
+  <th>Window sill</th>
+  <th>KW required</th>
+  <th>T/C</th>
+  <th>Laminate/<br>vinyl/Tiles</th>
+  <th>Output</th>
+  </tr>${rows}<tr>
+  <td colspan="11">
+  </td>
+  <td colspan="3" class="label right">Total KW:</td>
+  <td class="input">${calcTotalKw()}</td>
+  </tr>
+  </table>
+  <br>
+  <div class="rad-materials">${materialTable(left)}${materialTable(right)}</div>
+  </div>`;
+}
+update();
+  </script>
+  <script>
+   // Split PDF print helper. It opens two print views and uses the address as the suggested PDF filename.
+function cleanFileName(name) {
+    return String(name||'Survey').replace(/[\\/:*?"<>|]/g,' ').replace(/\s+/g,' ').trim().slice(0,120) || 'Survey';
+}
+function currentAddressName(){
+  return cleanFileName(val('site_address') || val('front_address') || val('r_address') || val('p_address') || 'Survey');
+}
+function allPageStyles(){
+  return Array.from(document.querySelectorAll('style')).map(s=>s.textContent).join('\n') + '\n@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important} body{background:#fff!important}.sheet-wrap{page-break-after:always;break-after:page}.sheet-wrap:last-child{page-break-after:auto;break-after:auto}.sheet .input{background:#ffff66!important}.sheet .gold{background:#ffc000!important}.sheet .black{background:#000!important;color:#fff!important}.sheet .warn{background:red!important}}';
+}
+function buildPrintHtml(title, sheetTitles){
+  update();
+  const wanted=new Set(sheetTitles);
+  const parts=Array.from(document.querySelectorAll('.sheet-wrap')).filter(w=>wanted.has((w.querySelector('h2')?.textContent||'').trim())).map(w=>w.outerHTML).join('\n');
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title><style>${allPageStyles()}</style>
+<style>
+.pdf-panel{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:9999;align-items:center;justify-content:center}.pdf-panel.open{display:flex}.pdf-card{background:#fff;border-radius:12px;max-width:430px;padding:18px;box-shadow:0 20px 60px rgba(0,0,0,.25)}.pdf-card h3{margin:0 0 8px}.pdf-card p{margin:0 0 12px;color:#555;line-height:1.35}.pdf-card button{border:0;border-radius:8px;background:#111827;color:#fff;padding:10px 12px;font-weight:700;cursor:pointer;margin:4px}.pdf-card button.secondary{background:#4b5563}.signature-pad-wrap{border:1px solid #ddd;border-radius:10px;background:#fff;padding:10px;margin:10px 0}.signature-pad-wrap canvas{width:100%;height:120px;border:1px solid #aaa;border-radius:8px;background:#fff;touch-action:none}.signature-pad-actions{display:flex;gap:8px;margin-top:8px}.signature-pad-actions button{border:0;border-radius:8px;background:#4b5563;color:#fff;padding:8px 10px;font-weight:700}.signature-img{max-width:100%;height:48px;display:block;object-fit:contain}.signature-placeholder{display:block;height:48px;color:#777;font-style:italic}.signature-cell{height:56px;background:#ffff66}
+@media print{.pdf-panel{display:none!important}}
+</style>
+
+<style>
+/* Extra room controls on the Rads tab */
+.extra-room-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.extra-room-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.extra-room-pill button {
+  border: 0;
+  background: #b91c1c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.extra-room-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.extra-room-add button {
+  border: 0;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  padding: 8px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+</style>
+
+<style>
+/* Larger dropdowns for phones/tablets */
+.field select {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 1000px) {
+  .field select {
+    min-height: 50px;
+    font-size: 17px;
+    padding: 12px;
+  }
+}
+</style>
+
+<style>
+/* Bigger room expand/collapse rows on the Rads tab */
+#radsForm details {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+#radsForm summary {
+  min-height: 54px;
+  padding: 16px 14px;
+  background: #f3f4f6;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style-position: inside;
+}
+
+#radsForm summary::after {
+  content: "Tap to open";
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+#radsForm details[open] summary::after {
+  content: "Tap to close";
+}
+
+#radsForm details .field {
+  padding: 0 12px;
+}
+
+#radsForm details .field:first-of-type {
+  padding-top: 12px;
+}
+
+#radsForm details .field:last-of-type {
+  padding-bottom: 12px;
+}
+
+@media (max-width: 1000px) {
+  #radsForm summary {
+    min-height: 62px;
+    font-size: 18px;
+    padding: 18px 16px;
+  }
+
+  #radsForm details {
+    margin: 12px 0;
+  }
+}
+</style>
+
+<style>
+/* Stronger mobile/tablet room selector sizing for the Rads tab */
+#radsForm details {
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  margin: 12px 0 !important;
+  overflow: hidden !important;
+}
+
+#radsForm details > summary {
+  min-height: 62px !important;
+  padding: 18px 16px !important;
+  background: #f3f4f6 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  list-style-position: inside !important;
+}
+
+#radsForm details > summary::after {
+  content: "Tap to open" !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+#radsForm details[open] > summary::after {
+  content: "Tap to close" !important;
+}
+
+#radsForm details .field {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+#a_note_contractor,
+#a_site_rules {
+  background: #f3f4f6 !important;
+  color: #555 !important;
+  cursor: not-allowed !important;
+}
+</style>
+
+<style>
+/* Bigger A12a expand/collapse sections for phones/tablets */
+#a12aForm details {
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  margin: 12px 0 !important;
+  overflow: hidden !important;
+}
+
+#a12aForm details > summary {
+  min-height: 62px !important;
+  padding: 18px 16px !important;
+  background: #f3f4f6 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  list-style-position: inside !important;
+}
+
+#a12aForm details > summary::after {
+  content: "Tap to open" !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+#a12aForm details[open] > summary::after {
+  content: "Tap to close" !important;
+}
+
+#a12aForm details .field {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+#a12aForm details .field:first-of-type {
+  padding-top: 12px !important;
+}
+
+#a12aForm details .field:last-of-type {
+  padding-bottom: 12px !important;
+}
+</style>
+</head><body><main class="main">${parts}</main><script>document.title=${JSON.stringify(title)}; window.onload=function(){setTimeout(function(){window.focus();window.print();},300)};<\/script></body></html>`;
+}
+function openPrintWindow(title, sheetTitles){
+  const w=window.open('', '_blank');
+  if(!w){alert('The PDF windows were blocked. Please allow pop-ups for this local file, then press Save PDFs again.'); return null;}
+  w.document.open();
+  w.document.write(buildPrintHtml(title, sheetTitles));
+  w.document.close();
+  return w;
+}
+function saveSplitPdfs(){
+  const address=currentAddressName();
+  const firstTitle=address;
+  const secondTitle='HnS - '+address;
+  const w1=openPrintWindow(firstTitle, ['Front','Rads']);
+  const w2=openPrintWindow(secondTitle, ['A12a','Customer Profile']);
+  if(w1 && w2){
+    try{
+      w2.stop && w2.stop();
+      w1.addEventListener('afterprint', function(){ setTimeout(function(){ try{w2.focus(); w2.print();}catch(e){} }, 700); });
+    }catch(e){}
+  }
+}
+  </script>
+  <div aria-hidden="true" class="pdf-panel" id="pdfPanel">
+   <div class="pdf-card">
+    <h3>
+     Save PDFs
+    </h3>
+    <p>
+     This will save them one at a time so the browser does not block the second page. Front/Rads is set to landscape; H&amp;S is set to portrait.
+    </p>
+    <button onclick="printPdfPart('survey')">
+     Save Front + Rads PDF
+    </button>
+    <button onclick="printPdfPart('hns')">
+     Save H&amp;S PDF
+    </button>
+    <button class="secondary" onclick="hidePdfOptions()">
+     Close
+    </button>
+    <p style="font-size:12px;margin-top:10px">
+     In the save/print window, enable
+     <b>
+      Background graphics
+     </b>
+     if colours do not appear.
+    </p>
+   </div>
+  </div>
+  <script>
+   /* ============================================================
+   PDF MENU, PRINTING, AND SIGNATURE PADS
+   Front/Rads prints landscape. H&S prints portrait.
+   Signature canvases save into hidden form fields.
+   ============================================================ */
+// One-at-a-time PDF saver to avoid popup blocking, plus per-PDF page orientation.
+function showPdfOptions() {
+  document.getElementById('pdfPanel')?.classList.add('open');
+}
+function hidePdfOptions() {
+  document.getElementById('pdfPanel')?.classList.remove('open');
+}
+function buildPrintHtml(title, sheetTitles, orientation) {
+    update();
+    const wanted=new Set(sheetTitles);
+    const parts=Array.from(document.querySelectorAll('.sheet-wrap')).filter(w=>wanted.has((w.querySelector('h2')?.textContent||'').trim())).map(w=>w.outerHTML).join('\n');
+    const pageCss=`@page{size:A4 ${orientation};margin:8mm} body{background:#fff!important;margin:0}.main{padding:0!important}.sheet-wrap{box-shadow:none!important;border:0!important;margin:0!important;padding:0!important;page-break-after:always;break-after:page}.sheet-wrap:last-child{page-break-after:auto;break-after:auto}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}.sheet .input{background:#ffff66!important}.sheet .gold{background:#ffc000!important}.sheet .black{background:#000!important;color:#fff!important}.sheet .warn{background:red!important}.sidebar,.buttons,.help,.pdf-panel{display:none!important}`;
+    return `<!doctype html>
+  <html>
+  <head>
+  <meta charset="utf-8">
+  <title>${escapeHtml(title)}</title>
+  <style>${allPageStyles()}\n${pageCss}</style>
+  
+<style>
+/* Extra room controls on the Rads tab */
+.extra-room-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.extra-room-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d1d5db;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+.extra-room-pill button {
+  border: 0;
+  background: #b91c1c;
+  color: #fff;
+  border-radius: 999px;
+  padding: 2px 6px;
+  cursor: pointer;
+}
+.extra-room-add {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.extra-room-add button {
+  border: 0;
+  border-radius: 8px;
+  background: #111827;
+  color: #fff;
+  padding: 8px 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+</style>
+
+<style>
+/* Larger dropdowns for phones/tablets */
+.field select {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 1000px) {
+  .field select {
+    min-height: 50px;
+    font-size: 17px;
+    padding: 12px;
+  }
+}
+</style>
+
+<style>
+/* Bigger room expand/collapse rows on the Rads tab */
+#radsForm details {
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #ffffff;
+  margin: 10px 0;
+  overflow: hidden;
+}
+
+#radsForm summary {
+  min-height: 54px;
+  padding: 16px 14px;
+  background: #f3f4f6;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  list-style-position: inside;
+}
+
+#radsForm summary::after {
+  content: "Tap to open";
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+#radsForm details[open] summary::after {
+  content: "Tap to close";
+}
+
+#radsForm details .field {
+  padding: 0 12px;
+}
+
+#radsForm details .field:first-of-type {
+  padding-top: 12px;
+}
+
+#radsForm details .field:last-of-type {
+  padding-bottom: 12px;
+}
+
+@media (max-width: 1000px) {
+  #radsForm summary {
+    min-height: 62px;
+    font-size: 18px;
+    padding: 18px 16px;
+  }
+
+  #radsForm details {
+    margin: 12px 0;
+  }
+}
+</style>
+
+<style>
+/* Stronger mobile/tablet room selector sizing for the Rads tab */
+#radsForm details {
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  margin: 12px 0 !important;
+  overflow: hidden !important;
+}
+
+#radsForm details > summary {
+  min-height: 62px !important;
+  padding: 18px 16px !important;
+  background: #f3f4f6 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  list-style-position: inside !important;
+}
+
+#radsForm details > summary::after {
+  content: "Tap to open" !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+#radsForm details[open] > summary::after {
+  content: "Tap to close" !important;
+}
+
+#radsForm details .field {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+#a_note_contractor,
+#a_site_rules {
+  background: #f3f4f6 !important;
+  color: #555 !important;
+  cursor: not-allowed !important;
+}
+</style>
+
+<style>
+/* Bigger A12a expand/collapse sections for phones/tablets */
+#a12aForm details {
+  border: 1px solid #d1d5db !important;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  margin: 12px 0 !important;
+  overflow: hidden !important;
+}
+
+#a12aForm details > summary {
+  min-height: 62px !important;
+  padding: 18px 16px !important;
+  background: #f3f4f6 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  list-style-position: inside !important;
+}
+
+#a12aForm details > summary::after {
+  content: "Tap to open" !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #6b7280 !important;
+}
+
+#a12aForm details[open] > summary::after {
+  content: "Tap to close" !important;
+}
+
+#a12aForm details .field {
+  padding-left: 12px !important;
+  padding-right: 12px !important;
+}
+
+#a12aForm details .field:first-of-type {
+  padding-top: 12px !important;
+}
+
+#a12aForm details .field:last-of-type {
+  padding-bottom: 12px !important;
+}
+</style>
+</head>
+  <body>
+  <main class="main">${parts}</main>
+  </body>
+  </html>`;
+}
+function printPdfPart(type) {
+    const address=currentAddressName();
+    const title=type==='hns' ? 'HnS - '+address : address;
+    const sheets=type==='hns' ? ['A12a','Customer Profile'] : ['Front','Rads'];
+    const orientation=type==='hns' ? 'portrait' : 'landscape';
+    const w=window.open('', '_blank');
+    if(!w) {
+        alert('The PDF page was blocked. Please allow pop-ups for this local file, then press the same Save PDF button again.');
+        return;
+  }
+    w.document.open();
+    w.document.write(buildPrintHtml(title,sheets,orientation));
+    w.document.close();
+    try {
+     w.document.title=title;
+  } catch(e) {
+  }
+    setTimeout(()=> {
+     try {
+      w.focus(); w.print();
+    } catch(e) {
+      alert('Could not open the print dialog.');
+    }
+  },500);
+}
+// Signature pad support. Stores signatures inside the existing hidden signature fields.
+const oldCellForSignatures = cell;
+cell = function(id) {
+    if(id==='p_tenant_sig' || id==='p_surveyor_sig') {
+        const data=val(id);
+        if(data && data.startsWith('data:image/')) return `<span class="data signature-cell">
+    <img class="signature-img" src="${data}">
+    </span>`;
+        return `<span class="data signature-placeholder">Signature box</span>`;
+  }
+    return oldCellForSignatures(id);
+};
+function addSignaturePads() {
+    const profile=document.getElementById('profileForm');
+    if(!profile || document.getElementById('tenantSigPad')) return;
+    ['p_tenant_sig','p_surveyor_sig'].forEach(id=> {
+    const e=document.getElementById(id); const wrap=e&&e.closest('.field'); if(wrap) wrap.style.display='none';
+  });
+    profile.insertAdjacentHTML('beforeend',`<div class="card">
+  <h3>Signatures</h3>
+  <div class="signature-pad-wrap">
+  <label>
+  <b>Tenant signature</b>
+  </label>
+  <canvas id="tenantSigPad" width="700" height="170">
+  </canvas>
+  <div class="signature-pad-actions">
+  <button type="button" onclick="clearSignature('p_tenant_sig','tenantSigPad')">Clear tenant signature</button>
+  </div>
+  </div>
+  <div class="signature-pad-wrap">
+  <label>
+  <b>Surveyor signature</b>
+  </label>
+  <canvas id="surveyorSigPad" width="700" height="170">
+  </canvas>
+  <div class="signature-pad-actions">
+  <button type="button" onclick="clearSignature('p_surveyor_sig','surveyorSigPad')">Clear surveyor signature</button>
+  </div>
+  </div>
+  </div>`);
+    setupSignaturePad('p_tenant_sig','tenantSigPad');
+    setupSignaturePad('p_surveyor_sig','surveyorSigPad');
+}
+function setupSignaturePad(inputId,canvasId) {
+    const canvas=document.getElementById(canvasId),
+   input=document.getElementById(inputId);
+   if(!canvas||!input) return;
+    const ctx=canvas.getContext('2d');
+   ctx.lineWidth=3;
+   ctx.lineCap='round';
+   ctx.strokeStyle='#111';
+    if(input.value && input.value.startsWith('data:image/')) {
+    const img=new Image();
+     img.onload=()=>ctx.drawImage(img,0,0,canvas.width,canvas.height);
+     img.src=input.value;
+  }
+    let drawing=false,
+  last=null;
+    function pos(e) {
+    const r=canvas.getBoundingClientRect();
+     const p=e.touches?e.touches[0]:e;
+     return  {
+      x:(p.clientX-r.left)*(canvas.width/r.width),
+      y:(p.clientY-r.top)*(canvas.height/r.height)
+    };
+  }
+    function start(e) {
+    e.preventDefault();
+     drawing=true;
+     last=pos(e);
+  }
+    function move(e) {
+    if(!drawing)return;
+     e.preventDefault();
+     const p=pos(e);
+     ctx.beginPath();
+     ctx.moveTo(last.x,last.y);
+     ctx.lineTo(p.x,p.y);
+     ctx.stroke();
+     last=p;
+     input.value=canvas.toDataURL('image/png');
+     update();
+  }
+    function end() {
+    drawing=false;
+     input.value=canvas.toDataURL('image/png');
+     update();
+  }
+    canvas.addEventListener('mousedown',start);
+   canvas.addEventListener('mousemove',move);
+   window.addEventListener('mouseup',end);
+    canvas.addEventListener('touchstart',start, {
+    passive:false
+  });
+   canvas.addEventListener('touchmove',move, {
+    passive:false
+  });
+   canvas.addEventListener('touchend',end);
+}
+function clearSignature(inputId,canvasId) {
+    const canvas=document.getElementById(canvasId),
+   input=document.getElementById(inputId);
+   if(!canvas||!input) return;
+    canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+   input.value='';
+   update();
+}
+addSignaturePads();
+update();
+  </script>
+ 
+<script>
+/* ============================================================
+   EXTRA RADS ROOMS
+
+   This adds user-defined rooms to the Rads form and preview.
+   The standard rooms are still kept in the original rooms[] array.
+   Extra rooms are stored in localStorage and also included when
+   using the Save data / Load data buttons.
+   ============================================================ */
+
+let customRooms = [];
+
+try {
+  customRooms = JSON.parse(localStorage.getItem('surveyCustomRooms') || '[]');
+} catch (error) {
+  customRooms = [];
+}
+
+function saveCustomRooms() {
+  localStorage.setItem('surveyCustomRooms', JSON.stringify(customRooms));
+}
+
+function roomKeyFromName(roomName) {
+  return String(roomName || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '') || 'room';
+}
+
+function allRoomNames() {
+  return rooms.concat(customRooms);
+}
+
+function roomFieldDefinitions(roomName) {
+  return [
+    ['len', 'Length (m)', 'number'],
+    ['wid', 'Width (m)', 'number'],
+    ['outside', 'Outside / unheated walls', 'select', ['', '0', '1', '2', '3']],
+    ['ex_size', 'Existing Size', 'text'],
+    ['ex_loc', 'Existing Location', 'text'],
+    ['ex_trv', 'Existing TRV', 'select', yesNo],
+    ['new_size', 'New Size', 'text'],
+    ['new_loc', 'New Location', 'text'],
+    ['new_trv', 'New TRV', 'select', yesNo],
+    ['sill', 'Window sill', 'text'],
+    ['kw', 'kW required', 'number'],
+    ['tc', 'T/C', 'text'],
+    ['laminate', 'Laminate / vinyl / tiles', 'select', yesNo],
+    ['output', 'Output', 'number']
+  ];
+}
+
+function roomFormHtml(roomName, index) {
+  const key = roomKeyFromName(roomName);
+  const fields = roomFieldDefinitions(roomName);
+
+  return `
+    <details ${index < 2 ? 'open' : ''}>
+      <summary><b>${escapeHtml(roomName)}</b></summary>
+      ${fields.map(field => makeField([
+        `rad_${key}_${field[0]}`,
+        `${roomName} - ${field[1]}`,
+        field[2],
+        field[3]
+      ])).join('')}
+    </details>
+  `;
+}
+
+function extraRoomControlsHtml() {
+  const list = customRooms.length
+    ? customRooms.map(room => `
+        <span class="extra-room-pill">
+          ${escapeHtml(room)}
+          <button type="button" onclick="removeCustomRoom('${roomKeyFromName(room)}')">Remove</button>
+        </span>
+      `).join('')
+    : '<p class="muted">No extra rooms added.</p>';
+
+  return `
+    <div class="card">
+      <h3>Extra rooms</h3>
+      <p class="muted">Use this if the property has rooms not shown in the standard list, for example Utility, Conservatory, Office, En-suite, or Store.</p>
+      <div class="extra-room-add">
+        <input id="newCustomRoomName" type="text" placeholder="Room name, e.g. Utility">
+        <button type="button" onclick="addCustomRoom()">Add room</button>
+      </div>
+      <div class="extra-room-list">${list}</div>
+    </div>
+  `;
+}
+
+function rebuildRadsForm() {
+  const radsForm = document.getElementById('radsForm');
+  if (!radsForm) return;
+
+  let radsHtml = `
+    <div class="card">
+      <h3>Radiator Sheet</h3>
+      <div class="field">
+        <label>Address</label>
+        <div class="muted">Uses the Main Property Address above.</div>
+      </div>
+      <div class="row">
+        ${makeField(['r_job', 'Job Number', 'text'])}
+        ${makeField(['r_ceiling', 'Ceiling', 'text'])}
+      </div>
+      <div class="field">
+        ${makeField(['r_output_temp', 'Calculated Output KW', 'text'])}
+      </div>
+    </div>
+    ${extraRoomControlsHtml()}
+    <div class="card">
+      <h3>Rooms</h3>
+  `;
+
+  allRoomNames().forEach((roomName, index) => {
+    radsHtml += roomFormHtml(roomName, index);
+  });
+
+  radsHtml += `
+    </div>
+    <div class="card">
+      <h3>Materials</h3>
+      ${materialFields.map(makeField).join('')}
+    </div>
+  `;
+
+  radsForm.innerHTML = radsHtml;
+
+  // Reconnect live preview updates after rebuilding the form HTML.
+  radsForm.querySelectorAll('[data-id]').forEach(element => {
+    element.addEventListener('input', update);
+    element.addEventListener('change', update);
+  });
+}
+
+function addCustomRoom() {
+  const input = document.getElementById('newCustomRoomName');
+  const roomName = (input?.value || '').trim();
+
+  if (!roomName) {
+    alert('Enter a room name first.');
+    return;
+  }
+
+  const alreadyExists = allRoomNames().some(existingRoom =>
+    roomKeyFromName(existingRoom) === roomKeyFromName(roomName)
+  );
+
+  if (alreadyExists) {
+    alert('That room is already listed.');
+    return;
+  }
+
+  customRooms.push(roomName);
+  saveCustomRooms();
+  rebuildRadsForm();
+  update();
+}
+
+function removeCustomRoom(roomKey) {
+  customRooms = customRooms.filter(roomName => roomKeyFromName(roomName) !== roomKey);
+  saveCustomRooms();
+  rebuildRadsForm();
+  update();
+}
+
+const oldGetDataWithRooms = getData;
+getData = function () {
+  const data = oldGetDataWithRooms();
+  data._customRooms = customRooms;
+  return data;
+};
+
+const oldSetDataWithRooms = setData;
+setData = function (data) {
+  if (data && Array.isArray(data._customRooms)) {
+    customRooms = data._customRooms;
+    saveCustomRooms();
+    rebuildRadsForm();
+  }
+
+  oldSetDataWithRooms(data);
+};
+
+function renderRads() {
+  const rows = allRoomNames().map(roomName => {
+    const key = roomKeyFromName(roomName);
+
+    return `
+      <tr>
+        <td>${escapeHtml(roomName)}</td>
+        ${['len', 'wid', 'outside', 'ex_size', 'ex_loc', 'ex_trv', 'new_size', 'new_loc', 'new_trv', 'sill', 'kw', 'tc', 'laminate', 'output']
+          .map(field => `<td class="input">${cell(`rad_${key}_${field}`)}</td>`)
+          .join('')}
+      </tr>
+    `;
+  }).join('');
+
+  const leftIds = [
+    'mat_boiler',
+    'mat_flue',
+    'mat_clock',
+    'mat_clock_loc',
+    'mat_plume',
+    'mat_total_rads',
+    'mat_trv',
+    'mat_lsv',
+    'mat_sentinel'
+  ];
+
+  const leftMaterials = materialFields.filter(field => leftIds.includes(field[0]));
+  const rightMaterials = materialFields.filter(field => !leftIds.includes(field[0]));
+
+  const materialTable = items => `
+    <table class="sheet rads">
+      <tr>
+        <th colspan="3">Materials</th>
+        <th colspan="2">Quantity</th>
+      </tr>
+      ${items.map(field => `
+        <tr>
+          <td class="label" colspan="3">${field[1]}</td>
+          <td class="input" colspan="2">${cell(field[0])}</td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+
+  return `
+    <div class="sheet-wrap">
+      <div class="sheet-title">
+        <h2>Rads</h2>
+        <small>Radiator schedule</small>
+      </div>
+      <table class="sheet rads">
+        <colgroup>
+          <col class="room">
+          <col class="narrow"><col class="narrow"><col class="narrow">
+          <col class="big"><col class="big"><col class="narrow">
+          <col class="big"><col class="big"><col class="narrow">
+          <col class="narrow"><col class="narrow"><col class="narrow"><col class="narrow"><col class="narrow">
+        </colgroup>
+        <tr>
+          <td class="label">Address:</td>
+          <td colspan="9">${cell('site_address')}</td>
+          <td colspan="3" class="label center">Job Number:</td>
+          <td colspan="2" class="input">${cell('r_job')}</td>
+        </tr>
+        <tr>
+          <td class="label">Ceiling</td>
+          <td colspan="2" class="input">${cell('r_ceiling')}</td>
+          <td class="label center">(M)</td>
+          <td colspan="6"></td>
+          <td colspan="3" class="label right">Output:</td>
+          <td class="input">${cell('r_output_temp')}</td>
+          <td class="label">KW</td>
+        </tr>
+        <tr class="small">
+          <th></th>
+          <th>Length<br>(M)</th>
+          <th>Width<br>(M)</th>
+          <th>Outside/<br>unheated walls</th>
+          <th>Existing Size</th>
+          <th>Location</th>
+          <th>TRV</th>
+          <th>New Size</th>
+          <th>Location</th>
+          <th>TRV</th>
+          <th>Window sill</th>
+          <th>KW required</th>
+          <th>T/C</th>
+          <th>Laminate/<br>vinyl/Tiles</th>
+          <th>Output</th>
+        </tr>
+        ${rows}
+        <tr>
+          <td colspan="11"></td>
+          <td colspan="3" class="label right">Total KW:</td>
+          <td class="input">${calcTotalKw()}</td>
+        </tr>
+      </table>
+      <br>
+      <div class="rad-materials">
+        ${materialTable(leftMaterials)}
+        ${materialTable(rightMaterials)}
+      </div>
+    </div>
+  `;
+}
+
+rebuildRadsForm();
+update();
+</script>
+
+<script>
+/* ============================================================
+   CALCULATED BOILER OUTPUT
+
+   Total KW now adds up the room Output column.
+   The calculated boiler/system output is:
+     - minimum 12 KW
+     - otherwise room output total + 10%
+     - rounded to 0 decimal places
+   ============================================================ */
+
+function calculateTotalRoomOutput() {
+  return allRoomNames().reduce((total, roomName) => {
+    const key = roomKeyFromName(roomName);
+    const field = document.getElementById(`rad_${key}_output`);
+    const value = Number(field?.value || 0);
+
+    return total + (Number.isFinite(value) ? value : 0);
+  }, 0);
+}
+
+function calculateRecommendedOutput() {
+  const totalRoomOutput = calculateTotalRoomOutput();
+  return Math.max(12, Math.round(totalRoomOutput * 1.1));
+}
+
+function updateCalculatedOutputField() {
+  const outputField = document.getElementById('r_output_temp');
+  if (!outputField) return;
+
+  outputField.value = calculateRecommendedOutput();
+  outputField.readOnly = true;
+  outputField.title = 'Auto calculated: minimum 12 KW, or total room output + 10%, rounded to 0 decimals.';
+}
+
+// Replace the previous Total KW calculation so it uses the room Output column.
+calcTotalKw = function () {
+  return calculateTotalRoomOutput().toFixed(2);
+};
+
+// Re-run the output calculation whenever the live preview updates.
+const oldUpdateForCalculatedOutput = update;
+update = function () {
+  updateCalculatedOutputField();
+  oldUpdateForCalculatedOutput();
+};
+
+// Make sure the output field is read-only again after the Rads form is rebuilt.
+const oldRebuildRadsFormForCalculatedOutput = rebuildRadsForm;
+rebuildRadsForm = function () {
+  oldRebuildRadsFormForCalculatedOutput();
+  updateCalculatedOutputField();
+};
+
+rebuildRadsForm();
+update();
+</script>
+
+<script>
+/* ============================================================
+   AUTO-COPIED DATES AND BOILER OUTPUT
+
+   - A12a Start Date = month/year of the survey date.
+   - A12a Complete Date = one month after the survey date.
+   - Front page Boiler Temp/Output copies the calculated output
+     from the Rads page.
+   ============================================================ */
+
+function getSurveyDateValue() {
+  return val('site_date') || val('front_date') || '';
+}
+
+function formatMonthAndYear(date) {
+  return new Intl.DateTimeFormat('en-GB', {
+    month: 'long',
+    year: 'numeric'
+  }).format(date);
+}
+
+function calculateA12aDates() {
+  const surveyDateValue = getSurveyDateValue();
+
+  if (!surveyDateValue) {
+    return {
+      start: '',
+      complete: ''
+    };
+  }
+
+  const surveyDate = new Date(`${surveyDateValue}T00:00:00`);
+
+  if (Number.isNaN(surveyDate.getTime())) {
+    return {
+      start: '',
+      complete: ''
+    };
+  }
+
+  const startDate = new Date(surveyDate.getFullYear(), surveyDate.getMonth(), 1);
+  const completeDate = new Date(surveyDate.getFullYear(), surveyDate.getMonth() + 1, 1);
+
+  return {
+    start: formatMonthAndYear(startDate),
+    complete: formatMonthAndYear(completeDate)
+  };
+}
+
+function updateA12aDateFields() {
+  const dates = calculateA12aDates();
+  const startField = document.getElementById('a_start');
+  const completeField = document.getElementById('a_complete');
+
+  if (startField) {
+    startField.value = dates.start;
+    startField.readOnly = true;
+    startField.title = 'Auto calculated from the survey date.';
+  }
+
+  if (completeField) {
+    completeField.value = dates.complete;
+    completeField.readOnly = true;
+    completeField.title = 'Auto calculated as one month after the survey date.';
+  }
+}
+
+function updateFrontBoilerTempFromRads() {
+  const radsOutput = document.getElementById('r_output_temp');
+  const frontBoilerTemp = document.getElementById('front_boiler_temp');
+
+  if (!radsOutput || !frontBoilerTemp) return;
+
+  frontBoilerTemp.value = radsOutput.value;
+  frontBoilerTemp.readOnly = true;
+  frontBoilerTemp.title = 'Auto copied from the calculated output on the Rads page.';
+}
+
+const oldUpdateForDatesAndBoilerOutput = update;
+update = function () {
+  if (typeof updateCalculatedOutputField === 'function') {
+    updateCalculatedOutputField();
+  }
+
+  updateA12aDateFields();
+  updateFrontBoilerTempFromRads();
+  oldUpdateForDatesAndBoilerOutput();
+};
+
+updateA12aDateFields();
+updateFrontBoilerTempFromRads();
+update();
+</script>
+
+<script>
+/* ============================================================
+   A12A SURVEY YEAR
+
+   Replaces the fixed 2024 heading with the year from the survey date.
+   ============================================================ */
+
+function getSurveyYear() {
+  const surveyDateValue = getSurveyDateValue ? getSurveyDateValue() : (val('site_date') || val('front_date') || '');
+
+  if (!surveyDateValue) return '';
+
+  const surveyDate = new Date(`${surveyDateValue}T00:00:00`);
+
+  if (Number.isNaN(surveyDate.getTime())) return '';
+
+  return surveyDate.getFullYear();
+}
+
+update();
+</script>
+
+<script>
+/* ============================================================
+   MATERIALS TABLE OPTIONS AND INSTALLATION TYPE DEFAULTS
+
+   - Flue and Clock now have a quantity box plus a type dropdown.
+   - Installation Type has Full Heating / Boiler Only / Rads Only.
+   - Full Heating and Boiler Only automatically fill pipe quantities.
+   ============================================================ */
+
+function replaceMaterialField(fieldId, newDefinition) {
+  const index = materialFields.findIndex(field => field[0] === fieldId);
+
+  if (index >= 0) {
+    materialFields[index] = newDefinition;
+  }
+}
+
+function insertMaterialFieldAfter(afterFieldId, newDefinition) {
+  const alreadyExists = materialFields.some(field => field[0] === newDefinition[0]);
+  if (alreadyExists) return;
+
+  const index = materialFields.findIndex(field => field[0] === afterFieldId);
+
+  if (index >= 0) {
+    materialFields.splice(index + 1, 0, newDefinition);
+  } else {
+    materialFields.push(newDefinition);
+  }
+}
+
+function configureMaterialFields() {
+  replaceMaterialField('mat_flue', ['mat_flue_qty', 'Flue Quantity', 'number']);
+  insertMaterialFieldAfter('mat_flue_qty', ['mat_flue', 'Flue Type', 'select', ['', 'Standard', 'Vertical']]);
+
+  replaceMaterialField('mat_clock', ['mat_clock_qty', 'Clock Quantity', 'number']);
+  insertMaterialFieldAfter('mat_clock_qty', ['mat_clock', 'Clock Type', 'select', ['', 'C1+', 'C2+']]);
+
+  replaceMaterialField('mat_install_type', ['mat_install_type', 'Installation Type', 'select', ['', 'Full Heating', 'Boiler Only', 'Rads Only']]);
+
+  replaceMaterialField('mat_15mm', ['mat_15mm', '15mm Copper Tube', 'text']);
+  replaceMaterialField('mat_22mm', ['mat_22mm', '22mm Copper Tube', 'text']);
+  replaceMaterialField('mat_15hp20', ['mat_15hp20', '15mm Hep2O Coil', 'text']);
+  replaceMaterialField('mat_22hp20', ['mat_22hp20', '22mm Hep2O Tube', 'text']);
+}
+
+function setPipeDefaultsForInstallType() {
+  const installType = val('mat_install_type');
+  const defaults = {
+    'Full Heating': {
+      mat_15mm: '30 Meters',
+      mat_22mm: '15 Meters',
+      mat_15hp20: '50 Meters',
+      mat_22hp20: '15 Meters'
+    },
+    'Boiler Only': {
+      mat_15mm: '6 Meters',
+      mat_22mm: '6 Meters',
+      mat_15hp20: '0 Meters',
+      mat_22hp20: '0 Meters'
+    }
+  };
+
+  if (!defaults[installType]) return;
+
+  Object.entries(defaults[installType]).forEach(([fieldId, value]) => {
+    const field = document.getElementById(fieldId);
+    if (field) field.value = value;
+  });
+}
+
+function wireInstallationTypeDefaults() {
+  const installTypeField = document.getElementById('mat_install_type');
+  if (!installTypeField) return;
+
+  installTypeField.addEventListener('change', () => {
+    setPipeDefaultsForInstallType();
+    update();
+  });
+}
+
+const oldRebuildRadsFormForMaterialOptions = rebuildRadsForm;
+rebuildRadsForm = function () {
+  configureMaterialFields();
+  oldRebuildRadsFormForMaterialOptions();
+  wireInstallationTypeDefaults();
+};
+
+function materialRowsForOutput() {
+  return [
+    { label: 'Worcester 4000 inc. auto bypass / filling link / filter / vessel', qty: 'mat_boiler' },
+    { label: 'Flue', qty: 'mat_flue_qty', option: 'mat_flue' },
+    { label: 'Clock', qty: 'mat_clock_qty', option: 'mat_clock' },
+    { label: 'Clock location', qty: 'mat_clock_loc' },
+    { label: 'Plume Kit', qty: 'mat_plume' },
+    { label: 'Total Number of Radiators', qty: 'mat_total_rads' },
+    { label: 'Danfoss TRV Packs', qty: 'mat_trv' },
+    { label: 'Altech LSV', qty: 'mat_lsv' },
+    { label: 'Sentinel X100 / X800', qty: 'mat_sentinel' },
+    { label: 'Condense Pump', qty: 'mat_condense' },
+    { label: '22mm Capping’s', qty: 'mat_22mmcap' },
+    { label: 'Installation Type', qty: '', option: 'mat_install_type' },
+    { label: '15mm Copper Tube', qty: 'mat_15mm' },
+    { label: '22mm Copper Tube', qty: 'mat_22mm' },
+    { label: '15mm Hep2O Coil', qty: 'mat_15hp20' },
+    { label: '22mm Hep2O Tube', qty: 'mat_22hp20' },
+    { label: 'AICO Carbon Monoxide Alarm', qty: 'mat_aico' }
+  ];
+}
+
+function renderMaterialTable(items) {
+  return `
+    <table class="sheet rads">
+      <tr>
+        <th colspan="3">Materials</th>
+        <th>Quantity</th>
+        <th>Type / Option</th>
+      </tr>
+      ${items.map(item => `
+        <tr>
+          <td class="label" colspan="3">${item.label}</td>
+          <td class="input">${item.qty ? cell(item.qty) : ''}</td>
+          <td class="input">${item.option ? cell(item.option) : ''}</td>
+        </tr>
+      `).join('')}
+    </table>
+  `;
+}
+
+function renderRads() {
+  const rows = allRoomNames().map(roomName => {
+    const key = roomKeyFromName(roomName);
+
+    return `
+      <tr>
+        <td>${escapeHtml(roomName)}</td>
+        ${['len', 'wid', 'outside', 'ex_size', 'ex_loc', 'ex_trv', 'new_size', 'new_loc', 'new_trv', 'sill', 'kw', 'tc', 'laminate', 'output']
+          .map(field => `<td class="input">${cell(`rad_${key}_${field}`)}</td>`)
+          .join('')}
+      </tr>
+    `;
+  }).join('');
+
+  const materialRows = materialRowsForOutput();
+  const leftMaterials = materialRows.slice(0, 9);
+  const rightMaterials = materialRows.slice(9);
+
+  return `
+    <div class="sheet-wrap">
+      <div class="sheet-title">
+        <h2>Rads</h2>
+        <small>Radiator schedule</small>
+      </div>
+      <table class="sheet rads">
+        <colgroup>
+          <col class="room">
+          <col class="narrow"><col class="narrow"><col class="narrow">
+          <col class="big"><col class="big"><col class="narrow">
+          <col class="big"><col class="big"><col class="narrow">
+          <col class="narrow"><col class="narrow"><col class="narrow"><col class="narrow"><col class="narrow">
+        </colgroup>
+        <tr>
+          <td class="label">Address:</td>
+          <td colspan="9">${cell('site_address')}</td>
+          <td colspan="3" class="label center">Job Number:</td>
+          <td colspan="2" class="input">${cell('r_job')}</td>
+        </tr>
+        <tr>
+          <td class="label">Ceiling</td>
+          <td colspan="2" class="input">${cell('r_ceiling')}</td>
+          <td class="label center">(M)</td>
+          <td colspan="6"></td>
+          <td colspan="3" class="label right">Output:</td>
+          <td class="input">${cell('r_output_temp')}</td>
+          <td class="label">KW</td>
+        </tr>
+        <tr class="small">
+          <th></th>
+          <th>Length<br>(M)</th>
+          <th>Width<br>(M)</th>
+          <th>Outside/<br>unheated walls</th>
+          <th>Existing Size</th>
+          <th>Location</th>
+          <th>TRV</th>
+          <th>New Size</th>
+          <th>Location</th>
+          <th>TRV</th>
+          <th>Window sill</th>
+          <th>KW required</th>
+          <th>T/C</th>
+          <th>Laminate/<br>vinyl/Tiles</th>
+          <th>Output</th>
+        </tr>
+        ${rows}
+        <tr>
+          <td colspan="11"></td>
+          <td colspan="3" class="label right">Total KW:</td>
+          <td class="input">${calcTotalKw()}</td>
+        </tr>
+      </table>
+      <br>
+      <div class="rad-materials">
+        ${renderMaterialTable(leftMaterials)}
+        ${renderMaterialTable(rightMaterials)}
+      </div>
+    </div>
+  `;
+}
+
+configureMaterialFields();
+rebuildRadsForm();
+update();
+</script>
+
+<script>
+/* ============================================================
+   INSTALLATION TYPE ROW TIDY-UP + RADS ONLY DEFAULTS
+
+   This keeps the v19 split materials layout, but makes the
+   Installation Type row one single value instead of splitting it
+   across quantity/type columns. Rads Only also fills pipe values
+   with 0 Meters.
+   ============================================================ */
+
+setPipeDefaultsForInstallType = function () {
+  const installType = val('mat_install_type');
+  const defaults = {
+    'Full Heating': {
+      mat_15mm: '30 Meters',
+      mat_22mm: '15 Meters',
+      mat_15hp20: '50 Meters',
+      mat_22hp20: '15 Meters'
+    },
+    'Boiler Only': {
+      mat_15mm: '6 Meters',
+      mat_22mm: '6 Meters',
+      mat_15hp20: '0 Meters',
+      mat_22hp20: '0 Meters'
+    },
+    'Rads Only': {
+      mat_15mm: '0 Meters',
+      mat_22mm: '0 Meters',
+      mat_15hp20: '0 Meters',
+      mat_22hp20: '0 Meters'
+    }
+  };
+
+  if (!defaults[installType]) return;
+
+  Object.entries(defaults[installType]).forEach(([fieldId, value]) => {
+    const field = document.getElementById(fieldId);
+    if (field) field.value = value;
+  });
+};
+
+renderMaterialTable = function (items) {
+  return `
+    <table class="sheet rads">
+      <tr>
+        <th colspan="3">Materials</th>
+        <th>Quantity</th>
+        <th>Type / Option</th>
+      </tr>
+      ${items.map(item => {
+        if (item.option === 'mat_install_type') {
+          return `
+            <tr>
+              <td class="label" colspan="3">${item.label}</td>
+              <td class="input" colspan="2">${cell('mat_install_type')}</td>
+            </tr>
+          `;
+        }
+
+        return `
+          <tr>
+            <td class="label" colspan="3">${item.label}</td>
+            <td class="input">${item.qty ? cell(item.qty) : ''}</td>
+            <td class="input">${item.option ? cell(item.option) : ''}</td>
+          </tr>
+        `;
+      }).join('')}
+    </table>
+  `;
+};
+
+rebuildRadsForm();
+update();
+</script>
+
+<script>
+/* ============================================================
+   MATERIALS TABLE WITHOUT EXTRA TYPE COLUMN
+
+   Keeps the v19 two-list layout, but removes the extra Type/Option
+   column. Flue and Clock show their quantity and dropdown selection
+   together in the Quantity cell.
+   ============================================================ */
+
+renderMaterialTable = function (items) {
+  return `
+    <table class="sheet rads">
+      <tr>
+        <th colspan="3">Materials</th>
+        <th colspan="2">Quantity</th>
+      </tr>
+      ${items.map(item => {
+        let value = '';
+
+        if (item.option === 'mat_install_type') {
+          value = cell('mat_install_type');
+        } else if (item.qty && item.option) {
+          value = `${cell(item.qty)} ${cell(item.option)}`;
+        } else if (item.qty) {
+          value = cell(item.qty);
+        }
+
+        return `
+          <tr>
+            <td class="label" colspan="3">${item.label}</td>
+            <td class="input" colspan="2">${value}</td>
+          </tr>
+        `;
+      }).join('')}
+    </table>
+  `;
+};
+
+rebuildRadsForm();
+update();
+</script>
+
+<script>
+/* ============================================================
+   DATE DISPLAY FORMAT
+
+   Browser date inputs store values as yyyy-mm-dd.
+   This changes the spreadsheet preview display to dd-mm-yyyy.
+   ============================================================ */
+
+function formatDateForDisplay(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return value || '';
+
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
+const oldCellForDateFormatting = cell;
+cell = function (id) {
+  const dateFields = new Set([
+    'site_date',
+    'front_date',
+    'p_tenant_date',
+    'p_surveyor_date'
+  ]);
+
+  if (dateFields.has(id)) {
+    return `<span class="data">${escapeHtml(formatDateForDisplay(val(id)))}</span>`;
+  }
+
+  return oldCellForDateFormatting(id);
+};
+
+update();
+</script>
+
+<script>
+/* ============================================================
+   SAVE DATA FILENAME
+
+   Changes the Save data JSON filename to:
+   Address-Date.json
+   ============================================================ */
+
+function saveDataFileName() {
+  const address = currentAddressName ? currentAddressName() : cleanFileName(val('site_address') || val('front_address') || 'Survey');
+  const rawDate = getSurveyDateValue ? getSurveyDateValue() : (val('site_date') || val('front_date') || '');
+  const displayDate = formatDateForDisplay ? formatDateForDisplay(rawDate) : rawDate;
+  const datePart = displayDate || formatDateForDisplay(new Date().toISOString().slice(0, 10));
+
+  return cleanFileName(`${address}-${datePart}`) + '.json';
+}
+
+saveJson = function () {
+  const blob = new Blob([JSON.stringify(getData(), null, 2)], {
+    type: 'application/json'
+  });
+
+  download(blob, saveDataFileName());
+};
+</script>
+
+<script>
+/* ============================================================
+   LOCK A12A NOTE TEXT
+
+   Note to Contractor and Site Rules are fixed text and cannot be
+   edited from the form.
+   ============================================================ */
+
+const fixedA12aNoteToContractor = 'Working in occupied properties will require adequate protection and notices for residents, children and the public. The methods of working will need to take this into account.';
+const fixedA12aSiteRules = 'No Smoking, ID Cards To Be Carried At All Times. No Abusive Behaviour. Correct Standard Of Dress To Be Maintained At All Times. No Loud Music. All Waste To Be Removed From Site.';
+
+function lockA12aFixedText() {
+  const noteField = document.getElementById('a_note_contractor');
+  const rulesField = document.getElementById('a_site_rules');
+
+  if (noteField) {
+    noteField.value = fixedA12aNoteToContractor;
+    noteField.readOnly = true;
+    noteField.title = 'This text is fixed and cannot be edited.';
+  }
+
+  if (rulesField) {
+    rulesField.value = fixedA12aSiteRules;
+    rulesField.readOnly = true;
+    rulesField.title = 'This text is fixed and cannot be edited.';
+  }
+}
+
+const oldUpdateForLockedA12aText = update;
+update = function () {
+  lockA12aFixedText();
+  oldUpdateForLockedA12aText();
+};
+
+const oldSetDataForLockedA12aText = setData;
+setData = function (data) {
+  oldSetDataForLockedA12aText(data);
+  lockA12aFixedText();
+  update();
+};
+
+lockA12aFixedText();
+update();
+</script>
+
+<script>
+/* ============================================================
+   A12A SURVEYOR AND LIAISON FIELDS
+
+   - A12a Surveyor is copied from the main/front Surveyor field.
+   - Liaison Officer is blank until entered manually.
+   - Removes the old default names R. Chamberlain and Tracy.
+   ============================================================ */
+
+function updateA12aSurveyorAndLiaison() {
+  const mainSurveyor = val('site_surveyor') || val('front_surveyor') || '';
+  const a12aSurveyor = document.getElementById('a_surveyor');
+  const liaisonOfficer = document.getElementById('a_liaison');
+
+  if (a12aSurveyor) {
+    a12aSurveyor.value = mainSurveyor;
+    a12aSurveyor.readOnly = true;
+    a12aSurveyor.title = 'Auto copied from the main Surveyor field.';
+  }
+
+  if (liaisonOfficer && liaisonOfficer.value === 'Tracy Tonge - 329743') {
+    liaisonOfficer.value = '';
+  }
+}
+
+const oldUpdateForA12aNames = update;
+update = function () {
+  updateA12aSurveyorAndLiaison();
+  oldUpdateForA12aNames();
+};
+
+const oldSetDataForA12aNames = setData;
+setData = function (data) {
+  oldSetDataForA12aNames(data);
+  updateA12aSurveyorAndLiaison();
+  update();
+};
+
+updateA12aSurveyorAndLiaison();
+update();
+</script>
+</body>
+</html>
