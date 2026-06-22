@@ -596,65 +596,6 @@
     </style>
 
     <style>
-      /* Bigger room expand/collapse rows on the Rads tab */
-      #radsForm details {
-        border: 1px solid #d1d5db;
-        border-radius: 10px;
-        background: #ffffff;
-        margin: 10px 0;
-        overflow: hidden;
-      }
-
-      #radsForm summary {
-        min-height: 54px;
-        padding: 16px 14px;
-        background: #f3f4f6;
-        font-size: 17px;
-        font-weight: 700;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        list-style-position: inside;
-      }
-
-      #radsForm summary::after {
-        content: "Tap to open";
-        font-size: 12px;
-        font-weight: 600;
-        color: #6b7280;
-      }
-
-      #radsForm details[open] summary::after {
-        content: "Tap to close";
-      }
-
-      #radsForm details .field {
-        padding: 0 12px;
-      }
-
-      #radsForm details .field:first-of-type {
-        padding-top: 12px;
-      }
-
-      #radsForm details .field:last-of-type {
-        padding-bottom: 12px;
-      }
-
-      @media (max-width: 1000px) {
-        #radsForm summary {
-          min-height: 62px;
-          font-size: 18px;
-          padding: 18px 16px;
-        }
-
-        #radsForm details {
-          margin: 12px 0;
-        }
-      }
-    </style>
-
-    <style>
       /* Stronger mobile/tablet room selector sizing for the Rads tab */
       #radsForm details {
         border: 1px solid #d1d5db !important;
@@ -764,6 +705,7 @@
           <button class="tab" data-tab="a12aForm">A12a</button>
           <button class="tab" data-tab="profileForm">Profile</button>
         </div>
+        <div id="v55CompletionCounter"></div>
         <div class="buttons">
           <button onclick="showPdfOptions()">Save PDFs</button>
           <button class="secondary" onclick="saveJson()">Save data</button>
@@ -867,6 +809,10 @@
         ["front_sys", "Range rate output / 50% value", "text"],
         ["front_boiler_temp", "Boiler temperature °C", "text"],
         ["front_warning_codes", "Warning codes", "text"],
+        ["front_mcp", "MCP", "select", yesNo],
+        ["front_pv", "PV", "select", yesNo],
+        ["front_scaffolding", "Scaffolding", "select", yesNo],
+        ["front_shower", "Shower", "select", yesNo],
         ["front_further", "Further information", "textarea"],
         ["front_address", "Full Address", "textarea"],
         ["front_uprn", "UPRN", "text"],
@@ -1349,6 +1295,10 @@
   <td colspan="4" class="input">${cell("front_recarcass")}</td>
   </tr>
   <tr>
+  <td colspan="6" class="label">Fit tee into condense / vent</td>
+  <td colspan="10" class="input">${cell("front_fit_tee")}</td>
+  </tr>
+  <tr>
   <td colspan="5" class="label">Brick up lounge through vent</td>
   <td class="input">${cell("front_brick_lounge")}</td>
   <td colspan="10" class="input" rowspan="4"><b>Other Info:</b><br>${cell("front_other")}</td>
@@ -1813,8 +1763,10 @@
       fillForm();
       try {
         let saved = localStorage.getItem("surveyWebData");
-        if (saved) setData(JSON.parse(saved));
-        else update();
+        if (saved) {
+          setData(JSON.parse(saved));
+          window._autosaveWasRestored = true;
+        } else update();
       } catch (e) {
         update();
       }
@@ -6357,8 +6309,6 @@
     `;
         };
 
-        installFrontYesNoFieldsV52();
-
         if (typeof update === "function") {
           update();
         }
@@ -6589,6 +6539,332 @@
 
           update._v53PdfChecklistWrapped = true;
         }
+      })();
+    </script>
+    <style>
+      /* ============================================================
+   V55 UX IMPROVEMENTS
+
+   1. Dismissable help box
+   2. Autosave restore notification
+   3. Two-step safer Clear button
+   4. Completion progress counter in sidebar
+   5. Dark mode toggle icon
+   ============================================================ */
+
+      /* Help box dismiss button */
+      .v55-help-dismiss {
+        float: right;
+        background: transparent !important;
+        border: none !important;
+        color: #92400e !important;
+        cursor: pointer !important;
+        font-size: 16px !important;
+        font-weight: 700 !important;
+        padding: 0 0 0 8px !important;
+        line-height: 1 !important;
+        box-shadow: none !important;
+      }
+      body.theme-dark .v55-help-dismiss {
+        color: #fcd34d !important;
+      }
+
+      /* Completion progress counter */
+      #v55CompletionCounter {
+        margin: 8px 0 4px;
+      }
+      .v55-counter {
+        position: relative;
+        background: #e5e7eb;
+        border-radius: 6px;
+        height: 24px;
+        overflow: hidden;
+      }
+      .v55-counter-bar {
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        background: #166534;
+        border-radius: 6px;
+        transition: width 0.35s ease;
+      }
+      .v55-counter-bar.v55-bar-complete {
+        background: #15803d;
+      }
+      .v55-counter-text {
+        position: relative;
+        font-size: 12px;
+        font-weight: 600;
+        line-height: 24px;
+        padding: 0 8px;
+        color: #111;
+        white-space: nowrap;
+      }
+      body.theme-dark .v55-counter {
+        background: #374151 !important;
+      }
+      body.theme-dark .v55-counter-bar {
+        background: #86efac !important;
+      }
+      body.theme-dark .v55-counter-text {
+        color: #f9fafb !important;
+      }
+
+      /* Clear button pending state */
+      .buttons button.v55-clear-pending {
+        background: #7f1d1d !important;
+        animation: v55-blink 0.6s step-end infinite;
+      }
+      @keyframes v55-blink {
+        50% { opacity: 0.65; }
+      }
+    </style>
+
+    <script>
+      /* ============================================================
+   V55 UX IMPROVEMENTS
+   ============================================================ */
+      (function () {
+
+        /* ── 1. Dismissable help box ────────────────────────────── */
+        function installDismissableHelp() {
+          const helpDiv = document.querySelector(".help");
+          if (!helpDiv || helpDiv._v55Dismissable) return;
+          helpDiv._v55Dismissable = true;
+
+          if (localStorage.getItem("v55_help_dismissed") === "1") {
+            helpDiv.style.display = "none";
+            return;
+          }
+
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.textContent = "✕";
+          btn.className = "v55-help-dismiss";
+          btn.title = "Dismiss this message";
+          btn.onclick = function () {
+            helpDiv.style.display = "none";
+            try { localStorage.setItem("v55_help_dismissed", "1"); } catch (e) {}
+          };
+          helpDiv.prepend(btn);
+        }
+
+        /* ── 2. Autosave restore notification ──────────────────── */
+        function showAutosaveNotice() {
+          if (!window._autosaveWasRestored) return;
+          window._autosaveWasRestored = false;
+          if (typeof showAppStatus === "function") {
+            showAppStatus("Previous survey restored from autosave. Use Load data to open a different survey.");
+          }
+        }
+
+        /* ── 3. Two-step safer Clear button ─────────────────────── */
+
+        function clearAllSignatureCanvases() {
+          // Clear every known canvas variant so persistSignatureCanvases()
+          // finds no ink and cannot restore the old value.
+          [
+            "tenantSigPadV35", "tenantSigPadV34", "tenantSigPad",
+            "surveyorSigPadV35", "surveyorSigPadV34", "surveyorSigPad",
+          ].forEach(function (id) {
+            const canvas = document.getElementById(id);
+            if (canvas) {
+              canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+            }
+          });
+          // Also zero the hidden inputs directly before update() runs.
+          ["p_tenant_sig", "p_surveyor_sig"].forEach(function (id) {
+            const input = document.getElementById(id);
+            if (input) input.value = "";
+          });
+        }
+
+        function doClearForm() {
+          // Clear all data-id inputs.
+          document.querySelectorAll("[data-id]").forEach(function (e) {
+            e.value = "";
+          });
+          // Clear canvases BEFORE update() so persistSignatureCanvases
+          // finds no ink and does not restore the old signatures.
+          clearAllSignatureCanvases();
+          if (typeof setDefaults === "function") setDefaults();
+          if (typeof update === "function") update();
+        }
+
+        function installSafeClear() {
+          const buttons = document.querySelector(".buttons");
+          if (!buttons) return;
+
+          const clearBtn = Array.from(buttons.querySelectorAll("button"))
+            .find(function (b) { return b.textContent.trim() === "Clear"; });
+          if (!clearBtn || clearBtn._v55SafeClear) return;
+          clearBtn._v55SafeClear = true;
+
+          let pendingTimer = null;
+
+          // Remove the original onclick so the native confirm() doesn't fire.
+          clearBtn.removeAttribute("onclick");
+          clearBtn.addEventListener("click", function () {
+            if (pendingTimer) {
+              clearTimeout(pendingTimer);
+              pendingTimer = null;
+              clearBtn.textContent = "Clear";
+              clearBtn.classList.remove("v55-clear-pending");
+              doClearForm();
+            } else {
+              clearBtn.textContent = "Tap again to confirm";
+              clearBtn.classList.add("v55-clear-pending");
+              pendingTimer = setTimeout(function () {
+                pendingTimer = null;
+                clearBtn.textContent = "Clear";
+                clearBtn.classList.remove("v55-clear-pending");
+              }, 3000);
+            }
+          });
+        }
+
+        /* ── 4. Completion progress counter ─────────────────────── */
+
+        // The old setupSignaturePad attaches its 'end' handler to window
+        // mouseup with no drawing-in-progress guard, so EVERY click writes
+        // canvas.toDataURL() — even a blank canvas — into the hidden input.
+        // This bidirectional wrapper fixes that by also clearing the input
+        // when the canvas has no ink, so both the PDF checklist and the
+        // counter stay accurate.
+        if (
+          typeof window.persistSignatureCanvases === "function" &&
+          !window.persistSignatureCanvases._v55BidiSynced
+        ) {
+          const prevPersist = window.persistSignatureCanvases;
+          window.persistSignatureCanvases = function () {
+            prevPersist.apply(this, arguments);
+            [
+              { inputId: "p_tenant_sig",   canvasIds: ["tenantSigPadV35",   "tenantSigPadV34",   "tenantSigPad"]   },
+              { inputId: "p_surveyor_sig", canvasIds: ["surveyorSigPadV35", "surveyorSigPadV34", "surveyorSigPad"] },
+            ].forEach(function (pad) {
+              const input = document.getElementById(pad.inputId);
+              if (!input || !input.value.startsWith("data:image/")) return;
+              for (const id of pad.canvasIds) {
+                const canvas = document.getElementById(id);
+                if (!canvas || !canvas.width || !canvas.height) continue;
+                try {
+                  const pixels = canvas
+                    .getContext("2d", { willReadFrequently: true })
+                    .getImageData(0, 0, canvas.width, canvas.height).data;
+                  for (let i = 3; i < pixels.length; i += 4) {
+                    if (pixels[i] !== 0) return; // real ink — leave input alone
+                  }
+                  input.value = ""; // blank canvas — clear the input
+                } catch (e) {}
+                return; // canvas found; stop after first match
+              }
+            });
+          };
+          window.persistSignatureCanvases._v55BidiSynced = true;
+        }
+
+        function canvasHasRealInk(canvasIds) {
+          for (const id of canvasIds) {
+            const canvas = document.getElementById(id);
+            if (!canvas || !canvas.width || !canvas.height) continue;
+            try {
+              const pixels = canvas
+                .getContext("2d", { willReadFrequently: true })
+                .getImageData(0, 0, canvas.width, canvas.height).data;
+              for (let i = 3; i < pixels.length; i += 4) {
+                if (pixels[i] !== 0) return true;
+              }
+            } catch (e) {
+              return true; // can't read pixels — assume signed
+            }
+            return false; // canvas found but blank
+          }
+          return false; // no canvas found
+        }
+
+        function getCompletionStatus() {
+          function hasVal(id) {
+            return Boolean(String(
+              (document.getElementById(id) || {}).value || ""
+            ).trim());
+          }
+          function hasSig(canvasIds) {
+            // Check canvas pixels directly — the input value alone is
+            // unreliable because a blank canvas also produces a data:image/ URL.
+            return canvasHasRealInk(canvasIds);
+          }
+          function a12aComplete() {
+            if (!Array.isArray(risks)) return false;
+            return risks.every(function (risk) {
+              return hasVal("a_" + risk[0] + "_app") && hasVal("a_" + risk[0] + "_haz");
+            });
+          }
+          const checks = [
+            hasVal("site_address") || hasVal("front_address"),
+            hasVal("site_customer") || hasVal("front_customer"),
+            hasVal("site_surveyor") || hasVal("front_surveyor"),
+            hasVal("site_date") || hasVal("front_date"),
+            hasVal("front_warning_codes"),
+            Number((document.getElementById("r_output_temp") || {}).value) > 0,
+            hasVal("mat_install_type"),
+            Number((document.getElementById("mat_total_rads") || {}).value) > 0,
+            a12aComplete(),
+            hasSig(["tenantSigPadV35",   "tenantSigPadV34",   "tenantSigPad"]),
+            hasSig(["surveyorSigPadV35", "surveyorSigPadV34", "surveyorSigPad"]),
+          ];
+          return {
+            done: checks.filter(Boolean).length,
+            total: checks.length,
+          };
+        }
+
+        function renderCompletionCounter() {
+          const counter = document.getElementById("v55CompletionCounter");
+          if (!counter) return;
+          const { done, total } = getCompletionStatus();
+          const pct = Math.round((done / total) * 100);
+          const complete = done === total;
+          counter.innerHTML =
+            '<div class="v55-counter">' +
+            '<div class="v55-counter-bar' + (complete ? " v55-bar-complete" : "") + '" style="width:' + pct + '%"></div>' +
+            '<span class="v55-counter-text">' + done + "\u202f/\u202f" + total + " checks\u2002" + (complete ? "✓ Ready" : pct + "% complete") + "</span>" +
+            "</div>";
+        }
+
+        /* ── 5. Dark mode icon ───────────────────────────────────── */
+        function syncThemeIcon() {
+          const btn = document.getElementById("themeToggleButton");
+          if (!btn) return;
+          const isDark = document.body.classList.contains("theme-dark");
+          btn.textContent = isDark ? "\u2600\ufe0f Light mode" : "\uD83C\uDF19 Dark mode";
+        }
+
+        /* ── Wire everything up ─────────────────────────────────── */
+        function install() {
+          installDismissableHelp();
+          installSafeClear();
+          renderCompletionCounter();
+          syncThemeIcon();
+        }
+
+        /* Wrap update() to refresh counter and icon on every change */
+        if (typeof update === "function" && !update._v55Wrapped) {
+          const prevUpdate = update;
+          update = function () {
+            const result = prevUpdate.apply(this, arguments);
+            renderCompletionCounter();
+            syncThemeIcon();
+            return result;
+          };
+          update._v55Wrapped = true;
+        }
+
+        install();
+        window.addEventListener("load", function () {
+          install();
+          showAutosaveNotice();
+        });
       })();
     </script>
   </body>
