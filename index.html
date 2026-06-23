@@ -682,6 +682,44 @@
         padding-bottom: 12px !important;
       }
 
+      /* Collapsible "Main Property Details" — same look as Rads/A12a sections */
+      #commonForm details {
+        border: 1px solid #d1d5db !important;
+        border-radius: 12px !important;
+        background: #ffffff !important;
+        margin: 12px 0 !important;
+        overflow: hidden !important;
+      }
+      #commonForm details > summary {
+        min-height: 62px !important;
+        padding: 18px 16px !important;
+        background: #f3f4f6 !important;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        list-style-position: inside !important;
+      }
+      #commonForm details > summary::after {
+        content: "Tap to open" !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        color: #6b7280 !important;
+      }
+      #commonForm details[open] > summary::after {
+        content: "Tap to close" !important;
+      }
+      #commonForm details .field,
+      #commonForm details > p {
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+      }
+      #commonForm details .field:last-of-type {
+        padding-bottom: 12px !important;
+      }
+
       /* V35 signature boxes - proper canvas pads, not typed text boxes. */
       .v35-signature-card {
         margin-top: 14px;
@@ -1229,6 +1267,27 @@
       }
       body.theme-dark #radsForm details label,
       body.theme-dark #a12aForm details label {
+        color: #e5e7eb !important;
+      }
+      body.theme-dark #commonForm details {
+        background: #111827 !important;
+        border-color: #4b5563 !important;
+        color: #e5e7eb !important;
+      }
+      body.theme-dark #commonForm details > summary {
+        background: #1f2937 !important;
+        color: #f9fafb !important;
+        border-color: #4b5563 !important;
+      }
+      body.theme-dark #commonForm details[open] > summary {
+        background: #1e3a8a !important;
+        color: #ffffff !important;
+      }
+      body.theme-dark #commonForm details > summary::after {
+        color: #bfdbfe !important;
+      }
+      body.theme-dark #commonForm details .field,
+      body.theme-dark #commonForm details label {
         color: #e5e7eb !important;
       }
       body.theme-dark select,
@@ -2734,9 +2793,9 @@
         function buildCommon() {
           const holder = document.getElementById("commonForm");
           if (!holder) return;
-          holder.innerHTML = `<div class="card">
-    <h3>Main Property Details</h3>
-    <p class="muted">Enter these once and they will copy across the Front, Rads, A12a and Customer Profile sheets automatically.</p>${commonFields.map((f) => makeField(f)).join("")}</div>`;
+          holder.innerHTML = `<details id="commonDetails" open>
+    <summary><b>Main Property Details</b></summary>
+    <p class="muted">Enter these once and they will copy across the Front, Rads, A12a and Customer Profile sheets automatically.</p>${commonFields.map((f) => makeField(f)).join("")}</details>`;
         }
         function firstValue(ids) {
           for (const id of ids) {
@@ -3175,6 +3234,21 @@
       function hidePdfOptions() {
         document.getElementById("pdfPanel")?.classList.remove("open");
       }
+      // Let the Save PDFs dialog be dismissed by tapping the dark backdrop or
+      // pressing Escape — not just the Close button. Without this, a user who
+      // taps outside the card on mobile can get stuck behind the overlay,
+      // unable to interact with anything underneath.
+      (function () {
+        const panel = document.getElementById("pdfPanel");
+        if (panel) {
+          panel.addEventListener("click", function (e) {
+            if (e.target === panel) hidePdfOptions();
+          });
+        }
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") hidePdfOptions();
+        });
+      })();
       function buildPrintHtml(title, sheetTitles, orientation) {
         update();
         const wanted = new Set(sheetTitles);
