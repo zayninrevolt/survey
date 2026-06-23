@@ -3150,6 +3150,18 @@
         </p>
       </div>
     </div>
+    <div aria-hidden="true" class="pdf-panel" id="clearConfirmPanel">
+      <div class="pdf-card">
+        <h3>Clear all entered data?</h3>
+        <p>
+          This wipes every field and both signatures on the survey you have
+          open. Saved surveys in your list are not affected. This cannot be
+          undone.
+        </p>
+        <button id="clearConfirmYes" style="background: #b91c1c">Clear everything</button>
+        <button class="secondary" id="clearConfirmNo">Cancel</button>
+      </div>
+    </div>
     <script>
       /* ============================================================
    PDF MENU, PRINTING, AND SIGNATURE PADS
@@ -3518,6 +3530,12 @@
           update();
         }
         function end() {
+          // Only capture if a stroke was actually in progress. Without this
+          // guard, the window-level mouseup/touchend below fires on EVERY tap
+          // anywhere on the page and writes a blank-canvas data URL into the
+          // hidden input — which then reads as a "signature" in the PDF
+          // checklist even after the form is cleared.
+          if (!drawing) return;
           drawing = false;
           input.value = canvas.toDataURL("image/png");
           update();
@@ -6529,6 +6547,41 @@
           if (typeof update === "function") update();
         }
 
+        // Confirmation popup for Clear. Replaces the old "tap again to
+        // confirm" inline toggle, which looked broken on mobile (the button
+        // turned white and seemed to do nothing).
+        function openClearConfirm() {
+          const panel = document.getElementById("clearConfirmPanel");
+          if (!panel) {
+            // Fallback to a native popup if the modal markup is missing.
+            if (window.confirm("Clear all entered data?")) doClearForm();
+            return;
+          }
+          const yes = document.getElementById("clearConfirmYes");
+          const no = document.getElementById("clearConfirmNo");
+
+          function close() {
+            panel.classList.remove("open");
+            panel.setAttribute("aria-hidden", "true");
+            yes.removeEventListener("click", onYes);
+            no.removeEventListener("click", onNo);
+            panel.removeEventListener("click", onBackdrop);
+            document.removeEventListener("keydown", onKey);
+          }
+          function onYes() { close(); doClearForm(); }
+          function onNo() { close(); }
+          function onBackdrop(e) { if (e.target === panel) close(); }
+          function onKey(e) { if (e.key === "Escape") close(); }
+
+          yes.addEventListener("click", onYes);
+          no.addEventListener("click", onNo);
+          panel.addEventListener("click", onBackdrop);
+          document.addEventListener("keydown", onKey);
+
+          panel.classList.add("open");
+          panel.setAttribute("aria-hidden", "false");
+        }
+
         function installSafeClear() {
           const buttons = document.querySelector(".buttons");
           if (!buttons) return;
@@ -6537,29 +6590,16 @@
             Array.from(buttons.querySelectorAll("button"))
               .find(function (b) { return b.textContent.trim() === "Clear"; });
           if (!clearBtn || clearBtn._v55SafeClear) return;
-          const clearLabel = clearBtn.textContent.trim() || "Clear";
           clearBtn._v55SafeClear = true;
 
-          let pendingTimer = null;
-
-          // Remove the original onclick so the native confirm() doesn't fire.
+          // Remove the original inline onclick (native confirm) — we use the
+          // styled confirmation popup instead.
           clearBtn.removeAttribute("onclick");
           clearBtn.addEventListener("click", function () {
-            if (pendingTimer) {
-              clearTimeout(pendingTimer);
-              pendingTimer = null;
-              clearBtn.textContent = clearLabel;
-              clearBtn.classList.remove("v55-clear-pending");
-              doClearForm();
-            } else {
-              clearBtn.textContent = "Tap again to confirm";
-              clearBtn.classList.add("v55-clear-pending");
-              pendingTimer = setTimeout(function () {
-                pendingTimer = null;
-                clearBtn.textContent = clearLabel;
-                clearBtn.classList.remove("v55-clear-pending");
-              }, 3000);
+            if (typeof window.closeMoreMenuV58 === "function") {
+              window.closeMoreMenuV58();
             }
+            openClearConfirm();
           });
         }
 
