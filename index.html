@@ -67,6 +67,61 @@
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1" name="viewport" />
     <title>Heating Survey Web Form</title>
+    <!-- ============================================================
+         DURABLE STORAGE SHIM (Capacitor)
+         Keeps the app's synchronous localStorage code unchanged, but
+         mirrors every write to the native Preferences store (included
+         in Android auto-backup) and restores it if WebView storage is
+         ever wiped. No-ops on plain web. See README / capacitor setup.
+         ============================================================ -->
+    <script>
+      (function () {
+        var C = window.Capacitor;
+        var native = C && typeof C.isNativePlatform === "function" && C.isNativePlatform();
+        var Prefs = native && C.Plugins && C.Plugins.Preferences;
+        if (!Prefs) return; // plain web / no plugin: behave exactly as before
+
+        var LS = window.localStorage;
+        var _set = LS.setItem.bind(LS);
+        var _remove = LS.removeItem.bind(LS);
+        var _clear = LS.clear.bind(LS);
+
+        // 1) Write-through: mirror every localStorage mutation to native storage.
+        LS.setItem = function (k, v) {
+          _set(k, v);
+          try { Prefs.set({ key: k, value: String(v) }); } catch (e) {}
+        };
+        LS.removeItem = function (k) {
+          _remove(k);
+          try { Prefs.remove({ key: k }); } catch (e) {}
+        };
+        LS.clear = function () {
+          _clear();
+          try { Prefs.clear(); } catch (e) {}
+        };
+
+        // 2) Restore-on-empty: if the WebView lost data the native store still
+        //    has, fill the gaps and reload once so parse-time reads see it.
+        Prefs.keys().then(function (res) {
+          var keys = (res && res.keys) || [];
+          if (!keys.length) return;
+          var restored = false;
+          return keys.reduce(function (p, k) {
+            return p.then(function () {
+              if (LS.getItem(k) !== null) return; // don't clobber live data
+              return Prefs.get({ key: k }).then(function (r) {
+                if (r && r.value != null) { _set(k, r.value); restored = true; }
+              });
+            });
+          }, Promise.resolve()).then(function () {
+            if (restored && !sessionStorage.getItem("_prefsRestored")) {
+              sessionStorage.setItem("_prefsRestored", "1");
+              window.location.reload();
+            }
+          });
+        }).catch(function (e) { console.error("Prefs restore failed", e); });
+      })();
+    </script>
     <style>
       /* ============================================================
          CONSOLIDATED STYLES — v56
@@ -1836,6 +1891,7 @@
         ["front_pv", "PV", "select", yesNo],
         ["front_scaffolding", "Scaffolding", "select", yesNo],
         ["front_shower", "Shower", "select", yesNo],
+        ["front_urgency", "Urgency", "select", ["", "Isolated", "Damp and Condensation", "Other See Notes"]],
         ["front_further", "Further information", "textarea"],
         ["front_address", "Full Address", "textarea"],
         ["front_uprn", "UPRN", "text"],
@@ -2209,10 +2265,10 @@
   <td class="input">${cell("front_boiler_temp")}</td>
   </tr>
   <tr>
-  <td class="input">
-  </td>
+  <td colspan="2" class="header">Urgency:</td>
+  <td colspan="2" class="input">${cell("front_urgency")}</td>
   <td colspan="3" class="header">Further Information:</td>
-  <td colspan="12" class="input">${cell("front_further")}</td>
+  <td colspan="9" class="input">${cell("front_further")}</td>
   </tr>
   <tr>
   <td colspan="5" class="header">Full Address:</td>
@@ -2751,6 +2807,35 @@
           type: "application/json",
         });
         download(blob, "survey-data.json");
+      }
+      // Shared native exporter: writes the JSON to a real file and opens the
+      // Android share sheet. Used by the effective saveJson (reassigned later).
+      // Same JSON payload as the web download, so files round-trip between the
+      // Android app and the webapp interchangeably.
+      async function exportNative(json, name) {
+        const { Filesystem, Share } = window.Capacitor.Plugins;
+        try {
+          await Filesystem.writeFile({
+            path: name,
+            data: json,
+            directory: "CACHE",
+            encoding: "utf8",
+          });
+          const { uri } = await Filesystem.getUri({
+            directory: "CACHE",
+            path: name,
+          });
+          await Share.share({
+            title: "Heating Survey export",
+            text: "Heating Survey JSON backup",
+            url: uri,
+            dialogTitle: "Save or send survey JSON",
+          });
+        } catch (e) {
+          const msg = (e && (e.message || e.toString())) || "";
+          if (/cancel/i.test(msg)) return; // user dismissed the share sheet
+          alert("Could not export the JSON file:\n" + msg);
+        }
       }
       function clearForm() {
         if (confirm("Clear all entered data?")) {
@@ -4527,11 +4612,16 @@
       }
 
       saveJson = function () {
-        const blob = new Blob([JSON.stringify(getData(), null, 2)], {
-          type: "application/json",
-        });
-
-        download(blob, saveDataFileName());
+        const json = JSON.stringify(getData(), null, 2);
+        const name = saveDataFileName();
+        const C = window.Capacitor;
+        const native =
+          C && typeof C.isNativePlatform === "function" && C.isNativePlatform();
+        if (native && C.Plugins && C.Plugins.Filesystem && C.Plugins.Share) {
+          exportNative(json, name); // native file + Android share sheet
+        } else {
+          download(new Blob([json], { type: "application/json" }), name);
+        }
       };
     </script>
 
