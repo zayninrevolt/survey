@@ -720,6 +720,32 @@
         padding-bottom: 12px !important;
       }
 
+      /* Per-section progress badge shown in each collapsible summary */
+      .sec-badge {
+        margin-left: 10px !important;
+        margin-right: auto !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+        line-height: 1 !important;
+        padding: 4px 9px !important;
+        border-radius: 999px !important;
+        background: #e5e7eb !important;
+        color: #374151 !important;
+        white-space: nowrap !important;
+      }
+      .sec-badge.sec-complete {
+        background: #16a34a !important;
+        color: #ffffff !important;
+      }
+      body.theme-dark .sec-badge {
+        background: #374151 !important;
+        color: #e5e7eb !important;
+      }
+      body.theme-dark .sec-badge.sec-complete {
+        background: #16a34a !important;
+        color: #ffffff !important;
+      }
+
       /* V35 signature boxes - proper canvas pads, not typed text boxes. */
       .v35-signature-card {
         margin-top: 14px;
@@ -7249,6 +7275,97 @@
         document.addEventListener("keydown", function (event) {
           if (event.key === "Escape") window.closeMoreMenuV58();
         });
+      })();
+    </script>
+
+    <script>
+      /* ============================================================
+         V58 — PER-SECTION PROGRESS BADGES
+
+         Every collapsible <details> (Main Property Details, each Rads
+         room, each A12a hazard) gets a small badge in its header showing
+         how many of its fields are filled in (e.g. "3/14"), or a green
+         tick when they all are. Lets the surveyor see at a glance which
+         minimised sections still need work.
+         ============================================================ */
+      (function () {
+        const SECTION_SELECTOR =
+          "#commonForm details, #radsForm details, #a12aForm details";
+
+        function isFilled(el) {
+          if (el.type === "checkbox" || el.type === "radio") return el.checked;
+          return String(el.value || "").trim() !== "";
+        }
+
+        function updateSectionBadgesV58() {
+          document.querySelectorAll(SECTION_SELECTOR).forEach(function (details) {
+            const summary = details.querySelector(":scope > summary");
+            if (!summary) return;
+
+            const counted = Array.prototype.filter.call(
+              details.querySelectorAll("input, select, textarea"),
+              function (el) { return el.type !== "hidden" && !el.disabled; }
+            );
+            const total = counted.length;
+            if (!total) return;
+            const filled = counted.filter(isFilled).length;
+            const complete = filled === total;
+
+            let badge = summary.querySelector(":scope > .sec-badge");
+            if (!badge) {
+              badge = document.createElement("span");
+              badge.className = "sec-badge";
+              const b = summary.querySelector(":scope > b");
+              if (b && b.nextSibling) summary.insertBefore(badge, b.nextSibling);
+              else if (b) summary.appendChild(badge);
+              else summary.insertBefore(badge, summary.firstChild);
+            }
+
+            badge.classList.toggle("sec-complete", complete);
+            badge.textContent = complete ? "✓ Complete" : filled + "/" + total;
+            badge.setAttribute(
+              "aria-label",
+              complete
+                ? "All fields completed"
+                : filled + " of " + total + " fields filled"
+            );
+          });
+        }
+
+        window.updateSectionBadgesV58 = updateSectionBadgesV58;
+
+        // Live updates while typing/selecting (delegated so it survives the
+        // app's many update() re-wraps).
+        document.addEventListener("input", updateSectionBadgesV58, true);
+        document.addEventListener("change", updateSectionBadgesV58, true);
+
+        // Refresh when a section is expanded/collapsed.
+        document.addEventListener(
+          "toggle",
+          function (e) {
+            if (e.target && e.target.tagName === "DETAILS") {
+              updateSectionBadgesV58();
+            }
+          },
+          true
+        );
+
+        // Also catch programmatic loads (Open survey / Load data / Clear),
+        // which set field values without firing input events but do call update().
+        if (typeof update === "function" && !update._v58BadgeWrapped) {
+          const prev = update;
+          update = function () {
+            const r = prev.apply(this, arguments);
+            try { updateSectionBadgesV58(); } catch (e) {}
+            return r;
+          };
+          update._v58BadgeWrapped = true;
+        }
+
+        window.addEventListener("load", function () {
+          setTimeout(updateSectionBadgesV58, 300);
+        });
+        setTimeout(updateSectionBadgesV58, 0);
       })();
     </script>
   </body>
